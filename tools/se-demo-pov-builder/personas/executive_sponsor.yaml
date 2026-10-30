@@ -1,0 +1,31 @@
+id: executive_sponsor
+name: Executive Sponsor
+version: 1
+summary: >-
+  A senior leader who endorses the initiative and can remove obstacles. May or may not
+  also be the economic buyer.
+coverage: recommended
+typical_influence: high
+objectives:
+  - Deliver a strategic initiative (digital service reliability, cloud migration, consolidation)
+  - Show measurable improvement to their leadership or board
+motivations:
+  - Visible progress on stated strategic goals
+  - Confidence that the team can execute
+technical_concerns:
+  - Business risk from outages and blind spots
+  - Ability of the team to adopt the solution
+typical_objections:
+  - objection: "How do I know this will actually be adopted?"
+    approach: Share the POV plan with named owners, milestones and success criteria, and the adoption plan after purchase.
+discovery_signals:
+  - Refers to strategy, transformation or board-level goals
+  - Asks how success will be reported to them
+influence_notes: >-
+  Can accelerate or halt a decision. Engage sparingly with concise, validated outcomes.
+engagement_approach:
+  - Align the POV objectives with their stated goals
+  - Provide a short success summary at the end of the POV
+demo_focus:
+  - Business-service health views and summary reporting
+question_categories: [business, qualification]

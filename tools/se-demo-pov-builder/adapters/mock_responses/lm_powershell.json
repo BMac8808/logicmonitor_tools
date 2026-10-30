@@ -1,0 +1,8 @@
+{
+  "_comment": "Synthetic fixture data.",
+  "test_connection": {"connected": true, "portal": "example-portal (synthetic)"},
+  "export_resources": [
+    {"name": "lab-core-sw-01", "group": "Synthetic Lab/Network"},
+    {"name": "lab-app-01", "group": "Synthetic Lab/Servers"}
+  ]
+}

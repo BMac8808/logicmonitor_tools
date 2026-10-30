@@ -1,0 +1,40 @@
+id: practitioner
+name: Practitioner
+version: 1
+summary: >-
+  The engineers and operators who will use the platform daily: NOC staff, system and
+  network administrators, SREs and cloud engineers.
+coverage: recommended
+typical_influence: medium
+objectives:
+  - Find and fix problems faster
+  - Reduce alert noise and after-hours pages
+  - Spend less time maintaining monitoring itself
+motivations:
+  - Better tools and less toil
+  - Learning skills that matter for their career
+technical_concerns:
+  - Ease of onboarding devices and services
+  - Quality of alerts and the troubleshooting workflow
+  - Customisation of dashboards and monitoring logic
+  - Learning curve and documentation
+typical_objections:
+  - objection: "Rebuilding all our alerts and dashboards will take months."
+    approach: Identify the top workflows to migrate first and include them in the POV scope.
+  - objection: "New tools always mean more noise at first."
+    approach: Agree an alert-quality criterion (e.g. actionable alerts per week) and measure it.
+discovery_signals:
+  - Describes recent incidents in detail
+  - Talks about workarounds, scripts and manual checks
+  - Mentions on-call fatigue
+influence_notes: >-
+  Their day-to-day feedback carries weight with technical buyers and champions. A poor
+  hands-on experience during a POV is hard to recover from.
+engagement_approach:
+  - Involve them in hands-on POV tasks
+  - Use their incident stories to shape demo scenarios
+  - Collect their feedback as evidence (with their agreement)
+demo_focus:
+  - Troubleshooting workflow from alert to root cause
+  - Onboarding a new resource and seeing data quickly
+question_categories: [technical, process]

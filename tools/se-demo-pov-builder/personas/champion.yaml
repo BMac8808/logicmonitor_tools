@@ -1,0 +1,41 @@
+id: champion
+name: Champion
+version: 1
+summary: >-
+  An insider who wants the evaluation to succeed, has credibility with decision makers,
+  and will actively sell on your behalf when you are not in the room.
+coverage: required
+typical_influence: high
+objectives:
+  - Solve a visible operational problem they personally own or feel
+  - Gain recognition for leading a successful initiative
+  - Reduce risk of a failed tool rollout reflecting on them
+motivations:
+  - Career advancement and internal credibility
+  - Less firefighting for their team
+  - Being seen as the person who modernised operations
+technical_concerns:
+  - Whether the evaluation can be completed with the time and people they have
+  - Migration effort from existing tools
+  - Being able to show early, concrete wins
+typical_objections:
+  - objection: "I like it, but I can't get the budget conversation started."
+    approach: Co-author a business case using their own pain metrics; offer to brief the economic buyer together.
+  - objection: "My team is too busy to run a POV right now."
+    approach: Propose a narrowly scoped POV with SE-led setup and a fixed, short timeline.
+discovery_signals:
+  - Shares internal information proactively (org charts, past incidents, budget timing)
+  - Introduces you to other stakeholders without being asked
+  - Uses "we" when talking about the evaluation
+  - Can explain how buying decisions are made in their organisation
+influence_notes: >-
+  Influence comes from credibility and access, not title. Test the champion by asking for
+  something that costs them political capital (e.g. a meeting with the economic buyer).
+engagement_approach:
+  - Equip them with materials they can reuse internally (one-page summary, success criteria)
+  - Agree a mutual plan and review it with them weekly
+  - Validate their influence early by asking for access to other stakeholders
+demo_focus:
+  - Quick wins that map directly to the pain they described
+  - Outcomes they can retell to their leadership in two sentences
+question_categories: [business, process, qualification, stakeholder]

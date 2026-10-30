@@ -1,0 +1,39 @@
+id: detractor
+name: Detractor
+version: 1
+summary: >-
+  A stakeholder who prefers the status quo or a competing option. Their concerns are often
+  legitimate and, if addressed, can strengthen the evaluation.
+coverage: optional
+typical_influence: medium
+objectives:
+  - Protect an existing tool, process or investment they own
+  - Avoid disruption to their team
+motivations:
+  - Familiarity with current tools
+  - Concern about workload, job scope or loss of control
+  - Previous negative experience with a similar project
+technical_concerns:
+  - Gaps compared with the current tool's specialised features
+  - Migration effort and loss of historical data
+  - Alert noise or false positives in a new tool
+typical_objections:
+  - objection: "Our current tool already does this."
+    approach: Ask them to show the workflow; agree objectively which outcomes matter and test those in the POV.
+  - objection: "Every tool promises this and none deliver."
+    approach: Invite them to define a success criterion and own its validation.
+discovery_signals:
+  - Raises many edge cases or repeatedly defends the current tool
+  - Absent from meetings, or attends without participating
+  - Other stakeholders mention "pushback" from their team
+influence_notes: >-
+  Influence can be high informally. Do not bypass them; turning a detractor into a
+  validator of one criterion is often decisive.
+engagement_approach:
+  - Listen and document their concerns as explicit requirements
+  - Give them ownership of a success criterion
+  - Avoid disparaging their current tools
+demo_focus:
+  - The specific workflow they believe is at risk
+  - Migration and coexistence approach
+question_categories: [technical, process, stakeholder]

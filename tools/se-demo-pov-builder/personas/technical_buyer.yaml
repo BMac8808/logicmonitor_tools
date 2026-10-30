@@ -1,0 +1,40 @@
+id: technical_buyer
+name: Technical Buyer
+version: 1
+summary: >-
+  Evaluates whether the solution fits the technical environment and standards. Can say
+  "no" on technical grounds even if they cannot say "yes" alone.
+coverage: required
+typical_influence: high
+objectives:
+  - Confirm coverage of the current and planned technology stack
+  - Ensure security, architecture and integration standards are met
+  - Avoid creating new operational burden
+motivations:
+  - A technically sound decision they can defend
+  - Fewer tools and integrations to maintain
+technical_concerns:
+  - Data collection method, network access and credentials handling
+  - Scalability and high availability of the collection architecture
+  - Integration with existing ITSM, identity and automation tooling
+  - Data retention, residency and security review requirements
+typical_objections:
+  - objection: "We need to see it work with our specific devices and platforms."
+    approach: Capture the exact list and convert it into POV acceptance criteria with an agreed validation method.
+  - objection: "Our security team needs to review this first."
+    approach: Identify the security review process and owner early; add it as a POV dependency.
+discovery_signals:
+  - Asks detailed architecture or security questions
+  - Requests documentation, diagrams or reference architectures
+  - Compares against a requirements list or RFP
+influence_notes: >-
+  Often holds veto power through technical sign-off. Treat their requirements list as the
+  backbone of POV success criteria.
+engagement_approach:
+  - Agree technical acceptance criteria in writing before the POV starts
+  - Provide architecture and security information from official documentation only
+  - Involve them in validating each criterion
+demo_focus:
+  - Collection architecture and coverage of their stack
+  - Integrations and automation (APIs, ITSM)
+question_categories: [technical, process, qualification]

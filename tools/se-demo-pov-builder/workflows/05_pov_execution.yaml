@@ -1,0 +1,26 @@
+id: pov_execution
+name: POV Execution
+version: 1
+order: 5
+description: Run the Proof of Value and track progress against milestones.
+stages:
+  - id: run
+    name: Run
+    tasks:
+      - key: track_milestones
+        title: Track POV milestones and update status weekly
+        owner_role: se
+      - key: resolve_blockers
+        title: Resolve blockers and escalate where needed
+        owner_role: se
+      - key: weekly_checkin
+        title: Hold weekly check-ins with the champion
+        owner_role: joint
+  - id: record
+    name: Record evidence
+    tasks:
+      - key: record_evidence
+        title: Record evidence for each criterion as it is validated
+        owner_role: se
+        depends_on: [track_milestones]
+        evidence_required: true

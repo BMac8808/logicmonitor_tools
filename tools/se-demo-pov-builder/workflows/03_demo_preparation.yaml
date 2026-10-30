@@ -1,0 +1,39 @@
+id: demo_preparation
+name: Demo Preparation
+version: 1
+order: 3
+description: Prepare and deliver a demonstration tailored to the discovery findings.
+stages:
+  - id: plan
+    name: Plan the demo
+    tasks:
+      - key: generate_plan
+        title: Generate the demo plan from saved discovery
+        owner_role: se
+      - key: confirm_agenda
+        title: Confirm agenda, attendees and time with the champion
+        owner_role: se
+        depends_on: [generate_plan]
+  - id: build
+    name: Build and rehearse
+    tasks:
+      - key: prepare_environment
+        title: Prepare demo environment, data and fallbacks
+        owner_role: se
+        depends_on: [generate_plan]
+      - key: rehearse
+        title: Rehearse the demo end to end
+        owner_role: se
+        depends_on: [prepare_environment, confirm_agenda]
+  - id: deliver
+    name: Deliver and follow up
+    tasks:
+      - key: deliver_demo
+        title: Deliver the demo
+        owner_role: se
+        depends_on: [rehearse]
+      - key: demo_followup
+        title: Send follow-up with answers to open questions and proposed next steps
+        owner_role: se
+        depends_on: [deliver_demo]
+        evidence_required: true

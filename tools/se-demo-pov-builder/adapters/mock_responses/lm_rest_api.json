@@ -1,0 +1,20 @@
+{
+  "_comment": "Synthetic fixture data. Field names are illustrative and are not the real API schema.",
+  "list_resources": [
+    {"name": "lab-core-sw-01", "type": "network_switch", "group": "Synthetic Lab/Network", "status": "normal"},
+    {"name": "lab-edge-fw-01", "type": "firewall", "group": "Synthetic Lab/Network", "status": "warning"},
+    {"name": "lab-app-01", "type": "linux_server", "group": "Synthetic Lab/Servers", "status": "normal"},
+    {"name": "lab-db-01", "type": "windows_server", "group": "Synthetic Lab/Servers", "status": "critical"},
+    {"name": "lab-k8s-cluster", "type": "kubernetes_cluster", "group": "Synthetic Lab/Kubernetes", "status": "normal"}
+  ],
+  "list_resource_groups": [
+    {"name": "Synthetic Lab/Network", "resource_count": 2},
+    {"name": "Synthetic Lab/Servers", "resource_count": 2},
+    {"name": "Synthetic Lab/Kubernetes", "resource_count": 1}
+  ],
+  "get_alert_summary": {"critical": 1, "error": 0, "warning": 1, "total": 2},
+  "list_collectors": [
+    {"name": "lab-collector-a", "status": "up", "resources": 4},
+    {"name": "lab-collector-b", "status": "up", "resources": 1}
+  ]
+}

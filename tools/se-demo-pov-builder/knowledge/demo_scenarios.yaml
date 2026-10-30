@@ -1,0 +1,239 @@
+# Demo scenario library used by the demo builder.
+#
+# Scenarios reference capability ids from capabilities.yaml and persona ids from
+# personas/. `audience_talking_points` keys are persona ids; `default` applies to anyone.
+# Keep claims inside `demonstrates` and talking points tied to what you will actually show
+# in your own demo environment.
+version: 1
+scenarios:
+  - id: alert_to_root_cause
+    title: From alert to root cause
+    summary: Follow a realistic alert through context, related resources, logs and resolution.
+    duration_minutes: 15
+    capabilities: [alerting_escalation, log_analysis, topology_mapping, event_correlation]
+    pain_keywords: [mttr, troubleshooting, root cause, war room, slow to resolve, outage, incident]
+    contexts: [any]
+    demonstrates:
+      - How an alert carries context about the affected resource
+      - Moving from an alert to related metrics and logs without switching tools
+      - Using relationships between resources to judge impact
+    audience_talking_points:
+      default:
+        - Tie each step back to the incident the customer described in discovery
+      practitioner:
+        - Count the clicks and tool switches compared with the current process
+      technical_buyer:
+        - Where the data comes from and how it is collected
+      economic_buyer:
+        - Translate time saved per incident into the cost figure they shared
+    prerequisites:
+      - Demo environment with a reproducible alert condition
+      - Related logs available for the demo resource
+    data_requirements:
+      - At least one resource with recent alert history
+      - Log data linked to the same resource
+    prep_tasks:
+      - Rehearse triggering the alert condition
+      - Prepare a fallback recording or screenshots in case the live condition fails
+  - id: alert_noise_reduction
+    title: Reducing alert noise
+    summary: Show how alert rules, dynamic thresholds and correlation reduce non-actionable alerts.
+    duration_minutes: 10
+    capabilities: [anomaly_detection, event_correlation, alerting_escalation]
+    pain_keywords: [noise, alert fatigue, false positive, too many alerts, ignored alerts, duplicate]
+    contexts: [any]
+    demonstrates:
+      - Thresholds based on historical behaviour versus static thresholds
+      - Grouping related alerts
+      - Routing and escalation to the right team
+    audience_talking_points:
+      default:
+        - Use the alert volume figures the customer gave, not generic statistics
+      practitioner:
+        - Fewer after-hours pages for non-actionable conditions
+      detractor:
+        - Invite them to define what an actionable alert means for their team
+    prerequisites:
+      - Demo resources with enough history for baselines
+    data_requirements:
+      - Several weeks of metric history on demo resources
+    prep_tasks:
+      - Prepare a before/after comparison using demo data, clearly labelled as demo data
+  - id: hybrid_single_view
+    title: One view across on-premises and cloud
+    summary: Show servers, network and cloud resources together in one inventory and dashboard.
+    duration_minutes: 12
+    capabilities: [infrastructure_monitoring, network_monitoring, cloud_monitoring, dashboards_reporting]
+    pain_keywords: [too many tools, tool sprawl, blind spot, single pane, consolidation, visibility]
+    contexts: [servers_virtualization, network, cloud_aws, cloud_azure, cloud_gcp]
+    demonstrates:
+      - Mixed resource types grouped in one place
+      - A dashboard combining on-premises and cloud metrics
+    audience_talking_points:
+      default:
+        - Map each part of the view to a tool they use today
+      economic_buyer:
+        - Consolidation opportunity using their own tool cost figures
+      technical_buyer:
+        - Collection approach for each environment
+    prerequisites:
+      - Demo environment containing both on-premises and cloud resources
+    data_requirements:
+      - Resource groups that mirror the customer's environment types
+    prep_tasks:
+      - Rename demo groups to match the customer's terminology (fictional names only)
+  - id: network_health
+    title: Network health and capacity
+    summary: Interface utilisation, device health and traffic analysis for core and branch networks.
+    duration_minutes: 12
+    capabilities: [network_monitoring, traffic_flow_analysis, config_change_tracking]
+    pain_keywords: [bandwidth, network outage, branch, wan, slow network, capacity, configuration change]
+    contexts: [network, multi_site]
+    demonstrates:
+      - Interface status and utilisation over time
+      - Identifying top traffic sources
+      - Spotting a configuration change near the time of an issue
+    audience_talking_points:
+      default:
+        - Use device vendors the customer listed when narrating
+      practitioner:
+        - How quickly a congested link is identified
+      technical_buyer:
+        - Supported collection protocols for their vendor list (verify first)
+    prerequisites:
+      - Demo network devices with interface and flow data
+    data_requirements:
+      - Interface history and flow data on demo devices
+    prep_tasks:
+      - Confirm support for the customer's specific network vendors in official documentation
+  - id: cloud_visibility
+    title: Cloud service visibility
+    summary: Cloud resources and services alongside the rest of the estate, with alerting.
+    duration_minutes: 10
+    capabilities: [cloud_monitoring, dashboards_reporting, alerting_escalation]
+    pain_keywords: [cloud, migration, aws, azure, gcp, cloud visibility, separate cloud tool]
+    contexts: [cloud_aws, cloud_azure, cloud_gcp]
+    demonstrates:
+      - Cloud resources discovered and grouped
+      - Cloud metrics on the same dashboards as on-premises resources
+    audience_talking_points:
+      default:
+        - Refer to the cloud services the customer named
+      executive_sponsor:
+        - Visibility during and after the cloud migration initiative
+    prerequisites:
+      - Demo cloud account connected to the demo environment
+    data_requirements:
+      - Cloud resources of the types the customer uses
+    prep_tasks:
+      - Check which cloud services in the customer's list are supported, using official documentation
+  - id: kubernetes_workloads
+    title: Kubernetes workload troubleshooting
+    summary: Cluster, node and workload health with related logs.
+    duration_minutes: 12
+    capabilities: [container_monitoring, log_analysis, alerting_escalation]
+    pain_keywords: [kubernetes, container, pod, microservices, crashloop, ephemeral]
+    contexts: [kubernetes]
+    demonstrates:
+      - Cluster and workload health views
+      - Investigating a failing workload with logs
+    audience_talking_points:
+      default:
+        - Relate to the cluster count and platform from discovery
+      practitioner:
+        - Time to find the failing workload
+    prerequisites:
+      - Demo Kubernetes cluster with a workload that can be made to fail
+    data_requirements:
+      - Workload metrics and container logs
+    prep_tasks:
+      - Script the failure scenario and its reset
+  - id: service_health_exec
+    title: Business service health for leadership
+    summary: Service-level views and scheduled reports for non-technical stakeholders.
+    duration_minutes: 8
+    capabilities: [service_views, dashboards_reporting, synthetic_monitoring]
+    pain_keywords: [reporting, executive, leadership, sla, customer impact, availability report, board]
+    contexts: [any]
+    demonstrates:
+      - A business service made of multiple resources
+      - Availability and performance summary suitable for leadership
+      - Scheduled report delivery
+    audience_talking_points:
+      default:
+        - Use the service names the customer mentioned (or neutral placeholders)
+      economic_buyer:
+        - How results would be reported to them after purchase
+      executive_sponsor:
+        - Link the view to the strategic initiative they named
+    prerequisites:
+      - Demo service definition and dashboard
+    data_requirements:
+      - Several resources grouped into a demo service
+    prep_tasks:
+      - Prepare a sample report built from demo data
+  - id: itsm_workflow
+    title: Incident workflow integration
+    summary: Alerts creating and updating tickets and notifications in existing tools.
+    duration_minutes: 8
+    capabilities: [itsm_integration, alerting_escalation]
+    pain_keywords: [ticket, servicenow, pagerduty, manual ticket, itsm, on-call, incident process]
+    contexts: [itsm, any]
+    demonstrates:
+      - An alert opening a ticket or page in an integrated tool
+      - Alert acknowledgement and clearing reflected in the integrated tool
+    audience_talking_points:
+      default:
+        - Mention only integrations confirmed in official documentation
+      technical_buyer:
+        - Integration configuration and authentication approach
+    prerequisites:
+      - Demo instance of the integrated tool (sandbox)
+    data_requirements:
+      - Alert rule routed to the integration
+    prep_tasks:
+      - Verify the integration exists for the customer's specific tool and version
+  - id: automation_api
+    title: Automation and API
+    summary: Automating onboarding and reporting with scripts against the platform API.
+    duration_minutes: 10
+    capabilities: [api_automation, custom_monitoring]
+    pain_keywords: [automation, api, script, powershell, terraform, manual onboarding, infrastructure as code]
+    contexts: [any]
+    demonstrates:
+      - Adding resources programmatically
+      - Exporting data for other systems
+    audience_talking_points:
+      default:
+        - Show a short, readable script rather than a complex framework
+      practitioner:
+        - Fits with the scripting languages they already use
+      influencer:
+        - Alignment with existing automation standards
+    prerequisites:
+      - Demo API credentials stored outside the demo script
+    data_requirements:
+      - Demo resource that can be added and removed safely
+    prep_tasks:
+      - Test the script against the demo environment, never a customer environment
+  - id: msp_tenancy
+    title: Multi-tenant operations
+    summary: Separating customers or business units with role-based access and per-tenant views.
+    duration_minutes: 10
+    capabilities: [multi_tenancy, dashboards_reporting]
+    pain_keywords: [msp, tenant, customer portal, business unit, rbac, permissions]
+    contexts: [msp]
+    demonstrates:
+      - Separate groups and roles per tenant
+      - Per-tenant dashboards or reports
+    audience_talking_points:
+      default:
+        - Use fictional tenant names
+      economic_buyer:
+        - Operational efficiency of managing tenants in one platform
+    prerequisites:
+      - Demo environment with at least two fictional tenants
+    data_requirements:
+      - Resources assigned to each fictional tenant
+    prep_tasks:
+      - Prepare user accounts that demonstrate restricted access

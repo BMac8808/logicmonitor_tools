@@ -1,0 +1,8 @@
+{
+  "_comment": "Synthetic fixture data.",
+  "list_tools": [
+    {"name": "example_read_tool", "kind": "read_only"},
+    {"name": "example_write_tool", "kind": "state_changing"}
+  ],
+  "query": {"answer": "Synthetic response: 2 open alerts in the lab environment.", "sources": []}
+}

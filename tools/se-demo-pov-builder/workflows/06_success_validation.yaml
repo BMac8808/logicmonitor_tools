@@ -1,0 +1,29 @@
+id: success_validation
+name: Success Validation
+version: 1
+order: 6
+description: Confirm results with the customer and present a success summary.
+stages:
+  - id: validate
+    name: Validate
+    tasks:
+      - key: review_criteria
+        title: Review every criterion with its validator and confirm status
+        owner_role: joint
+        evidence_required: true
+      - key: export_summary
+        title: Export the success summary
+        owner_role: se
+        depends_on: [review_criteria]
+  - id: present
+    name: Present
+    tasks:
+      - key: readout
+        title: Present results to decision makers
+        owner_role: joint
+        depends_on: [export_summary]
+      - key: decision
+        title: Record the customer's decision and reasons
+        owner_role: account_executive
+        depends_on: [readout]
+        evidence_required: true

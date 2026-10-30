@@ -1,0 +1,29 @@
+id: pov_planning
+name: POV Planning
+version: 1
+order: 4
+description: Agree a scoped, measurable Proof of Value plan with the customer.
+stages:
+  - id: scope
+    name: Scope
+    tasks:
+      - key: draft_criteria
+        title: Draft success criteria with measurable outcomes
+        owner_role: se
+      - key: define_validation
+        title: Define validation methods and customer validators for each criterion
+        owner_role: se
+        depends_on: [draft_criteria]
+      - key: confirm_resources
+        title: Confirm customer resources, access and timeline
+        owner_role: customer
+  - id: agree
+    name: Agree
+    tasks:
+      - key: signoff_plan
+        title: Obtain written agreement to the POV plan and success criteria
+        owner_role: joint
+        depends_on: [define_validation, confirm_resources]
+        evidence_required: true
+    exit_criteria:
+      - Signed-off success criteria

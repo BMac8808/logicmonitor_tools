@@ -1,0 +1,46 @@
+id: discovery
+name: Discovery
+version: 1
+order: 1
+description: Understand the customer's pain, environment, stakeholders and goals.
+stages:
+  - id: prepare
+    name: Prepare
+    tasks:
+      - key: research_account
+        title: Research the account and its public priorities
+        owner_role: se
+      - key: map_stakeholders
+        title: Map known stakeholders and assign personas
+        owner_role: se
+      - key: plan_questions
+        title: Select discovery questions for the first call
+        owner_role: se
+        depends_on: [map_stakeholders]
+    exit_criteria:
+      - Stakeholders recorded with personas
+  - id: conduct
+    name: Conduct discovery
+    tasks:
+      - key: discovery_call
+        title: Run discovery call(s) and record answers with evidence sources
+        owner_role: se
+        depends_on: [plan_questions]
+        evidence_required: true
+      - key: capture_requirements
+        title: Capture technical and business requirements
+        owner_role: se
+        depends_on: [discovery_call]
+    exit_criteria:
+      - Primary pain and business impact captured
+      - Requirements recorded and prioritised
+  - id: confirm
+    name: Confirm understanding
+    tasks:
+      - key: recap
+        title: Send a written recap of findings to the champion and confirm accuracy
+        owner_role: se
+        depends_on: [capture_requirements]
+        evidence_required: true
+    exit_criteria:
+      - Champion confirmed the recap

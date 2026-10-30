@@ -1,0 +1,47 @@
+# Proof of Value milestone template.
+# `responsible`: se | customer | joint. `offset_days` is relative to the POV start date.
+# `depends_on` references other milestone keys in this file.
+version: 1
+default_duration_days: 30
+milestones:
+  - key: kickoff
+    title: POV kickoff and success criteria sign-off
+    description: Review objectives, success criteria, validation methods and owners with the customer.
+    responsible: joint
+    offset_days: 0
+  - key: security_review
+    title: Security and access approvals
+    description: Complete any security questionnaire and obtain access needed for the POV environment.
+    responsible: customer
+    offset_days: 3
+    depends_on: [kickoff]
+  - key: environment_setup
+    title: Environment setup
+    description: Prepare the POV environment and data collection for in-scope resources.
+    responsible: joint
+    offset_days: 7
+    depends_on: [security_review]
+  - key: coverage_validation
+    title: Coverage validation
+    description: Confirm in-scope technologies are visible and data is complete.
+    responsible: se
+    offset_days: 12
+    depends_on: [environment_setup]
+  - key: use_case_validation
+    title: Use case validation sessions
+    description: Work through each success criterion with the named customer validators and record evidence.
+    responsible: joint
+    offset_days: 20
+    depends_on: [coverage_validation]
+  - key: midpoint_review
+    title: Mid-point review
+    description: Review progress against criteria, blockers and timeline with the champion.
+    responsible: joint
+    offset_days: 15
+    depends_on: [environment_setup]
+  - key: results_readout
+    title: Results readout
+    description: Present the success summary to decision makers using validated evidence only.
+    responsible: joint
+    offset_days: 28
+    depends_on: [use_case_validation]

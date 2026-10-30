@@ -1,0 +1,31 @@
+id: influencer
+name: Influencer
+version: 1
+summary: >-
+  Shapes opinion without formal decision authority, such as an architect, a respected
+  senior engineer, a procurement lead or an adjacent team leader.
+coverage: optional
+typical_influence: medium
+objectives:
+  - Ensure the decision aligns with their domain (architecture, procurement, security)
+  - Be consulted rather than surprised
+motivations:
+  - Recognition of expertise
+  - Avoiding downstream problems in their area
+technical_concerns:
+  - Fit with standards in their domain
+  - Impact on adjacent teams and processes
+typical_objections:
+  - objection: "We weren't consulted on this."
+    approach: Bring them in early and ask what they need to see to be comfortable.
+discovery_signals:
+  - Others defer to their opinion in meetings
+  - They are copied on key communications
+influence_notes: >-
+  Map who listens to them. A quiet influencer can swing a technical buyer's opinion.
+engagement_approach:
+  - Ask for their input on the evaluation plan
+  - Address their domain concerns with documented facts
+demo_focus:
+  - The part of the solution that touches their domain
+question_categories: [technical, stakeholder]

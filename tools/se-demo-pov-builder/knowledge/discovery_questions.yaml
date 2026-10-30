@@ -1,0 +1,315 @@
+# Deterministic discovery question library.
+#
+# A question is offered for a deal when:
+#   - `personas` contains `all` or the persona of any stakeholder on the deal, AND
+#   - `contexts` contains `any` or one of the deal's technical context tags.
+# `qualification_key` links a question to an item in `qualification_checklist`; the
+# discovery coach reports checklist items that have no answered question as gaps.
+# `suggests_capabilities` lists capability ids worth considering when the answer reveals
+# a need. It is a hint for the SE, not a claim about the customer.
+version: 1
+context_tags:
+  - {id: network, label: "Network (LAN/WAN, firewalls, wireless)"}
+  - {id: servers_virtualization, label: "Servers & virtualisation"}
+  - {id: storage, label: "Storage"}
+  - {id: cloud_aws, label: "AWS"}
+  - {id: cloud_azure, label: "Microsoft Azure"}
+  - {id: cloud_gcp, label: "Google Cloud"}
+  - {id: kubernetes, label: "Kubernetes / containers"}
+  - {id: applications, label: "Business applications & websites"}
+  - {id: logs, label: "Logs & events"}
+  - {id: itsm, label: "ITSM / incident tooling"}
+  - {id: multi_site, label: "Branch / multi-site"}
+  - {id: msp, label: "Managed service provider / multi-tenant"}
+qualification_checklist:
+  - {key: current_tooling, label: Current monitoring tools, description: "Which tools are in use today, who owns them, and what they cost to run."}
+  - {key: pain, label: Primary pain, description: "The operational problem that triggered the evaluation, in the customer's words."}
+  - {key: business_impact, label: Business impact, description: "The measurable cost of the pain (outage minutes, staff hours, revenue, SLA penalties)."}
+  - {key: technical_scope, label: Technical scope, description: "The technologies and approximate scale that must be covered."}
+  - {key: decision_process, label: Decision process, description: "Who is involved, in what order, and what approvals (security, procurement) are needed."}
+  - {key: decision_criteria, label: Decision criteria, description: "How options will be compared, including competing alternatives."}
+  - {key: timeline, label: Timeline, description: "Key dates and the event driving them (renewal, project go-live, budget cycle)."}
+  - {key: budget, label: Budget, description: "Whether budget exists or how it will be obtained."}
+  - {key: success_criteria, label: Success criteria, description: "What must be demonstrated for the customer to proceed."}
+questions:
+  # --- Business ---------------------------------------------------------------
+  - id: biz_trigger
+    text: What prompted you to look at monitoring now, and what happens if nothing changes?
+    category: business
+    personas: [all]
+    contexts: [any]
+    purpose: Identify the compelling event and cost of inaction.
+    listen_for: [recent outage, renewal date, new project, leadership mandate]
+    qualification_key: pain
+    priority: 1
+  - id: biz_impact
+    text: When a critical service was last degraded or down, how long did it take to detect and resolve, and what did it cost the business?
+    category: business
+    personas: [champion, economic_buyer, executive_sponsor, technical_buyer]
+    contexts: [any]
+    purpose: Quantify business impact in the customer's own numbers.
+    listen_for: [minutes of downtime, revenue impact, SLA penalties, customer complaints]
+    suggests_capabilities: [alerting_escalation, event_correlation, service_views]
+    qualification_key: business_impact
+    priority: 1
+  - id: biz_strategy
+    text: Which strategic initiatives this year depend on reliable infrastructure or applications?
+    category: business
+    personas: [economic_buyer, executive_sponsor, champion]
+    contexts: [any]
+    purpose: Connect the evaluation to executive priorities.
+    listen_for: [cloud migration, digital services, consolidation, cost reduction, acquisition]
+    priority: 2
+  - id: biz_tool_cost
+    text: How many monitoring tools do you run today, and what do licences, maintenance and staff time for them cost?
+    category: business
+    personas: [economic_buyer, technical_buyer, champion]
+    contexts: [any]
+    purpose: Understand consolidation potential and total cost of the current state.
+    listen_for: [number of tools, renewal costs, dedicated admin headcount]
+    qualification_key: current_tooling
+    priority: 1
+  - id: biz_reporting
+    text: How is service health and availability reported to leadership today?
+    category: business
+    personas: [executive_sponsor, economic_buyer, champion]
+    contexts: [any]
+    purpose: Discover reporting needs and visibility gaps for leadership.
+    listen_for: [manual spreadsheets, monthly reports, no single view]
+    suggests_capabilities: [dashboards_reporting, service_views]
+    priority: 2
+  # --- Qualification ----------------------------------------------------------
+  - id: qual_decision_process
+    text: Who else will be involved in the decision, and what steps (security review, procurement, legal) are required?
+    category: qualification
+    personas: [champion, technical_buyer, economic_buyer]
+    contexts: [any]
+    purpose: Map the decision process and identify missing stakeholders.
+    listen_for: [names and roles, approval steps, security questionnaire]
+    qualification_key: decision_process
+    priority: 1
+  - id: qual_criteria
+    text: How will you compare options, and which alternatives are you considering, including keeping the current tools?
+    category: qualification
+    personas: [technical_buyer, champion, economic_buyer]
+    contexts: [any]
+    purpose: Understand decision criteria and competition.
+    listen_for: [evaluation scorecard, competing vendors, status quo]
+    qualification_key: decision_criteria
+    priority: 1
+  - id: qual_timeline
+    text: What dates matter for this decision, and what is driving them?
+    category: qualification
+    personas: [champion, economic_buyer, executive_sponsor]
+    contexts: [any]
+    purpose: Establish timeline and urgency.
+    listen_for: [contract renewal, project go-live, fiscal year end]
+    qualification_key: timeline
+    priority: 1
+  - id: qual_budget
+    text: Is budget allocated for this initiative, and if not, what is the process to obtain it?
+    category: qualification
+    personas: [economic_buyer, champion, executive_sponsor]
+    contexts: [any]
+    purpose: Confirm funding or the path to it.
+    listen_for: [approved budget, budget cycle, reallocation from existing tools]
+    qualification_key: budget
+    priority: 1
+  - id: qual_success
+    text: If we ran a proof of value, what would you need to see to be confident moving forward?
+    category: qualification
+    personas: [all]
+    contexts: [any]
+    purpose: Capture success criteria directly from the customer.
+    listen_for: [specific devices or services, measurable outcomes, named validators]
+    qualification_key: success_criteria
+    priority: 1
+  # --- Technical --------------------------------------------------------------
+  - id: tech_scope
+    text: Roughly how many devices, servers, cloud accounts and sites need to be monitored, and which are most critical?
+    category: technical
+    personas: [technical_buyer, practitioner, champion]
+    contexts: [any]
+    purpose: Establish scope and scale.
+    listen_for: [device counts, critical systems, number of sites]
+    qualification_key: technical_scope
+    priority: 1
+  - id: tech_current_tools
+    text: Walk me through how you monitor today. Which tools cover which parts of the environment, and where are the blind spots?
+    category: technical
+    personas: [technical_buyer, practitioner, detractor, influencer]
+    contexts: [any]
+    purpose: Understand current tooling and coverage gaps.
+    listen_for: [tool names, coverage gaps, manual checks, scripts]
+    qualification_key: current_tooling
+    priority: 1
+  - id: tech_alert_noise
+    text: How many alerts does the team receive in a typical week, and what share of them require action?
+    category: technical
+    personas: [practitioner, technical_buyer, detractor]
+    contexts: [any]
+    purpose: Measure alert quality and noise.
+    listen_for: [alert fatigue, ignored alerts, duplicate alerts, after-hours pages]
+    suggests_capabilities: [alerting_escalation, anomaly_detection, event_correlation]
+    priority: 1
+  - id: tech_troubleshooting
+    text: Describe a recent incident from first alert to resolution. Where did the time go?
+    category: technical
+    personas: [practitioner, technical_buyer, champion]
+    contexts: [any]
+    purpose: Find troubleshooting bottlenecks to target in demos.
+    listen_for: [switching between tools, lack of context, missing logs, unknown dependencies]
+    suggests_capabilities: [log_analysis, topology_mapping, event_correlation]
+    qualification_key: pain
+    priority: 1
+  - id: tech_network
+    text: Which network vendors and device types do you run, and how do you monitor interface health and bandwidth today?
+    category: technical
+    personas: [technical_buyer, practitioner, influencer]
+    contexts: [network, multi_site]
+    purpose: Understand network coverage requirements.
+    listen_for: [vendor list, SNMP versions, branch links, flow data]
+    suggests_capabilities: [network_monitoring, traffic_flow_analysis]
+    priority: 1
+  - id: tech_network_changes
+    text: How do you find out when a network configuration change causes a problem?
+    category: technical
+    personas: [practitioner, technical_buyer]
+    contexts: [network]
+    purpose: Identify configuration change visibility needs.
+    listen_for: [change-related outages, manual config backups, compliance audits]
+    suggests_capabilities: [config_change_tracking]
+    priority: 2
+  - id: tech_branch
+    text: How many remote sites do you have, and how do you know when a site's connectivity or local services degrade?
+    category: technical
+    personas: [technical_buyer, practitioner]
+    contexts: [multi_site]
+    purpose: Understand distributed site monitoring needs.
+    listen_for: [site counts, SD-WAN, user complaints as first signal]
+    suggests_capabilities: [network_monitoring, synthetic_monitoring]
+    priority: 2
+  - id: tech_servers
+    text: Which operating systems, hypervisors and storage platforms are in scope, and what is hardest to monitor today?
+    category: technical
+    personas: [technical_buyer, practitioner]
+    contexts: [servers_virtualization, storage]
+    purpose: Define server, virtualisation and storage coverage.
+    listen_for: [OS mix, hypervisor platform, storage arrays, capacity surprises]
+    suggests_capabilities: [infrastructure_monitoring, dashboards_reporting]
+    priority: 1
+  - id: tech_cloud
+    text: Which cloud providers and services do you use, and how is cloud monitoring split between teams?
+    category: technical
+    personas: [technical_buyer, practitioner, influencer]
+    contexts: [cloud_aws, cloud_azure, cloud_gcp]
+    purpose: Understand cloud scope and ownership.
+    listen_for: [account counts, native tools in use, separate cloud team, migration plans]
+    suggests_capabilities: [cloud_monitoring]
+    priority: 1
+  - id: tech_cloud_cost
+    text: Is cloud spend or right-sizing a concern that monitoring data should help with?
+    category: technical
+    personas: [economic_buyer, technical_buyer]
+    contexts: [cloud_aws, cloud_azure, cloud_gcp]
+    purpose: Check whether cloud cost visibility is a requirement. Verify capability fit before committing.
+    listen_for: [unexpected bills, idle resources, FinOps team]
+    suggests_capabilities: [cloud_monitoring, dashboards_reporting]
+    priority: 3
+  - id: tech_kubernetes
+    text: How many Kubernetes clusters do you run, where, and how do you troubleshoot workload issues today?
+    category: technical
+    personas: [technical_buyer, practitioner]
+    contexts: [kubernetes]
+    purpose: Define container monitoring scope.
+    listen_for: [cluster counts, managed Kubernetes, ephemeral workloads, separate tooling]
+    suggests_capabilities: [container_monitoring, log_analysis]
+    priority: 1
+  - id: tech_apps
+    text: Which business applications or customer-facing services matter most, and how do you know they are healthy from a user's perspective?
+    category: technical
+    personas: [technical_buyer, champion, executive_sponsor, practitioner]
+    contexts: [applications]
+    purpose: Identify service-level and synthetic monitoring needs.
+    listen_for: [customer-facing websites, internal ERP, SLA commitments]
+    suggests_capabilities: [service_views, synthetic_monitoring, application_tracing]
+    priority: 1
+  - id: tech_logs
+    text: Where do logs go today, and how often do engineers need them during an incident?
+    category: technical
+    personas: [practitioner, technical_buyer]
+    contexts: [logs, applications, kubernetes]
+    purpose: Understand log analysis needs.
+    listen_for: [separate log tool, cost of log storage, retention needs]
+    suggests_capabilities: [log_analysis]
+    priority: 2
+  - id: tech_itsm
+    text: Which ticketing, paging or chat tools must alerts integrate with, and how do incidents flow today?
+    category: technical
+    personas: [technical_buyer, practitioner, influencer]
+    contexts: [itsm, any]
+    purpose: Capture integration requirements.
+    listen_for: [ticketing system, on-call tool, CMDB, chat tool]
+    suggests_capabilities: [itsm_integration, alerting_escalation]
+    priority: 2
+  - id: tech_automation
+    text: Which tasks do you automate today, and what would you want to automate in monitoring (onboarding, maintenance windows, reporting)?
+    category: technical
+    personas: [technical_buyer, practitioner, influencer]
+    contexts: [any]
+    purpose: Identify API and automation requirements.
+    listen_for: [scripts, infrastructure as code, PowerShell, Python]
+    suggests_capabilities: [api_automation]
+    priority: 2
+  - id: tech_custom
+    text: Are there in-house applications or unusual devices you need to monitor that current tools cannot cover?
+    category: technical
+    personas: [practitioner, technical_buyer]
+    contexts: [any]
+    purpose: Identify custom monitoring requirements early.
+    listen_for: [proprietary systems, custom scripts, legacy devices]
+    suggests_capabilities: [custom_monitoring]
+    priority: 3
+  - id: tech_security_review
+    text: What security, data residency or access requirements must a monitoring platform meet?
+    category: technical
+    personas: [technical_buyer, influencer, detractor]
+    contexts: [any]
+    purpose: Surface security review requirements before the POV starts.
+    listen_for: [security questionnaire, data residency, credential handling, SSO]
+    qualification_key: decision_process
+    priority: 2
+  - id: tech_msp
+    text: How do you separate customers or business units in monitoring today, and what must each tenant be able to see?
+    category: technical
+    personas: [technical_buyer, economic_buyer, practitioner]
+    contexts: [msp]
+    purpose: Understand multi-tenancy requirements.
+    listen_for: [customer portals, RBAC, per-tenant reporting]
+    suggests_capabilities: [multi_tenancy, dashboards_reporting]
+    priority: 1
+  # --- Process & stakeholders ------------------------------------------------
+  - id: proc_ownership
+    text: Who owns monitoring today, and who would administer a new platform day to day?
+    category: process
+    personas: [champion, technical_buyer, practitioner]
+    contexts: [any]
+    purpose: Identify owners and adoption risk.
+    listen_for: [dedicated team, shared responsibility, no clear owner]
+    priority: 2
+  - id: proc_pov_resources
+    text: Who on your team can commit time to a proof of value, and when are they available?
+    category: process
+    personas: [champion, technical_buyer, practitioner]
+    contexts: [any]
+    purpose: Confirm customer resources for a POV.
+    listen_for: [named people, competing projects, change freezes]
+    priority: 2
+  - id: stake_concerns
+    text: What concerns have you heard internally about changing monitoring tools?
+    category: stakeholder
+    personas: [champion, influencer, detractor]
+    contexts: [any]
+    purpose: Surface detractors and objections early.
+    listen_for: [migration effort, loyalty to current tool, past failed projects]
+    priority: 2

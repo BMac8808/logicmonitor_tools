@@ -1,0 +1,23 @@
+id: technical_handoff
+name: Technical Handoff
+version: 1
+order: 7
+description: Hand over context to the post-sales team so the customer does not repeat themselves.
+stages:
+  - id: package
+    name: Package context
+    tasks:
+      - key: handoff_doc
+        title: Compile requirements, validated criteria, risks and stakeholder notes
+        owner_role: se
+      - key: open_items
+        title: List open items, commitments made and unsupported requirements
+        owner_role: se
+  - id: transfer
+    name: Transfer
+    tasks:
+      - key: handoff_meeting
+        title: Run the handoff meeting with the post-sales team
+        owner_role: joint
+        depends_on: [handoff_doc, open_items]
+        evidence_required: true

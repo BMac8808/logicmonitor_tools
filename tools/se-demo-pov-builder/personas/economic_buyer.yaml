@@ -1,0 +1,40 @@
+id: economic_buyer
+name: Economic Buyer
+version: 1
+summary: >-
+  The person who can release budget and give final approval. Cares about business
+  outcomes, risk and return rather than features.
+coverage: required
+typical_influence: high
+objectives:
+  - Reduce operational risk and the cost of outages
+  - Consolidate tools and contracts where it lowers total cost
+  - Support strategic initiatives (cloud migration, service quality, growth)
+motivations:
+  - Predictable spend and measurable return
+  - Avoiding a high-profile failure
+  - Alignment with the organisation's priorities this year
+technical_concerns:
+  - Total cost of ownership versus the current state
+  - Time to value and adoption risk
+  - Vendor viability and support model
+typical_objections:
+  - objection: "We already pay for monitoring tools."
+    approach: Quantify cost of the current state (tool overlap, outage minutes, staff time) using the customer's own figures.
+  - objection: "This isn't a priority this quarter."
+    approach: Connect the initiative to a priority they named; confirm timing and what would change it.
+discovery_signals:
+  - Asks about price, contract terms or ROI early
+  - Delegates technical detail to others
+  - Mentions budget cycles, board priorities or executive goals
+influence_notes: >-
+  Final say on spend. Rarely attends technical sessions; brief them with outcomes and
+  validated POV results only.
+engagement_approach:
+  - Keep meetings short and outcome-focused
+  - Present success criteria in business terms and confirm they would accept them
+  - Share validated results, never simulated ones
+demo_focus:
+  - Executive-level views of service health and risk
+  - Evidence of time saved or incidents avoided, expressed in their numbers
+question_categories: [business, qualification]

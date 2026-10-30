@@ -1,0 +1,32 @@
+id: technical_qualification
+name: Technical Qualification
+version: 1
+order: 2
+description: Decide whether there is a technical fit worth pursuing and what must be proven.
+stages:
+  - id: assess_fit
+    name: Assess fit
+    tasks:
+      - key: review_gaps
+        title: Review discovery gaps and resolve open questions
+        owner_role: se
+      - key: verify_capabilities
+        title: Verify mapped capabilities against official documentation
+        owner_role: se
+        evidence_required: true
+      - key: identify_risks
+        title: Identify technical risks and unsupported requirements
+        owner_role: se
+        depends_on: [verify_capabilities]
+    exit_criteria:
+      - Every must-have requirement mapped to a verified capability or flagged as a risk
+  - id: decide
+    name: Qualification decision
+    tasks:
+      - key: qualification_review
+        title: Review qualification with the account team (go / no-go)
+        owner_role: account_executive
+        depends_on: [identify_risks, review_gaps]
+        evidence_required: true
+    exit_criteria:
+      - Documented go / no-go decision

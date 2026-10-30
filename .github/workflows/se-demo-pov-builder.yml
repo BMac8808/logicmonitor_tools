@@ -1,0 +1,60 @@
+name: se-demo-pov-builder
+
+on:
+  push:
+    paths:
+      - "tools/se-demo-pov-builder/**"
+      - ".github/workflows/se-demo-pov-builder.yml"
+  pull_request:
+    paths:
+      - "tools/se-demo-pov-builder/**"
+      - ".github/workflows/se-demo-pov-builder.yml"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: tools/se-demo-pov-builder
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: pip install -e "backend[dev]"
+      - name: Lint
+        run: ruff check backend
+      - name: Validate content
+        run: python -m se_pov_builder.validate_content
+      - name: Test
+        run: pytest backend -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/se-demo-pov-builder/frontend/package-lock.json
+      - name: Install
+        run: npm ci
+        working-directory: tools/se-demo-pov-builder/frontend
+      - name: Type-check
+        run: npm run typecheck
+        working-directory: tools/se-demo-pov-builder/frontend
+      - name: Test
+        run: npm test
+        working-directory: tools/se-demo-pov-builder/frontend
+      - name: Build
+        run: npm run build
+        working-directory: tools/se-demo-pov-builder/frontend

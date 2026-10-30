@@ -1,0 +1,22 @@
+services:
+  app:
+    build: .
+    image: se-demo-pov-builder:local
+    ports:
+      - "127.0.0.1:8000:8000"   # loopback only
+    environment:
+      SEPB_LLM_PROVIDER: ${SEPB_LLM_PROVIDER:-none}
+      SEPB_LLM_BASE_URL: ${SEPB_LLM_BASE_URL:-}
+      SEPB_LLM_MODEL: ${SEPB_LLM_MODEL:-}
+      SEPB_LLM_API_KEY: ${SEPB_LLM_API_KEY:-}
+      SEPB_API_TOKEN: ${SEPB_API_TOKEN:-}
+    volumes:
+      - sepb-data:/app/data
+      # Uncomment to edit content without rebuilding (then use Library -> Reload content):
+      # - ./personas:/app/personas:ro
+      # - ./knowledge:/app/knowledge:ro
+      # - ./workflows:/app/workflows:ro
+    restart: unless-stopped
+
+volumes:
+  sepb-data:

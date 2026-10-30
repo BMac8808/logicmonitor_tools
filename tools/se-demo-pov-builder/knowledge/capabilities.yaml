@@ -1,0 +1,164 @@
+# Capability catalogue used to map customer requirements to platform areas.
+#
+# IMPORTANT: These are short, general summaries written by community contributors.
+# They are NOT authoritative and are NOT a statement of what any product version or
+# licence includes. Before presenting a capability to a customer, confirm it in current
+# official product documentation and with your licensing team, then set `verified: true`
+# and add a `reference` in your own copy if you wish.
+version: 1
+disclaimer: >-
+  Community-written summaries. Not authoritative. Verify every capability against current
+  official documentation and your licensing before presenting it to a customer.
+capabilities:
+  - id: infrastructure_monitoring
+    name: Hybrid infrastructure monitoring
+    category: Infrastructure
+    description: >-
+      Collection of availability and performance metrics from servers, virtualisation
+      and storage using collector-based monitoring.
+    keywords: [server, servers, windows, linux, vmware, hypervisor, virtualization, virtualisation, storage, cpu, memory, disk, datacenter, data center, on-prem, on-premises]
+    verified: false
+  - id: network_monitoring
+    name: Network device monitoring
+    category: Infrastructure
+    description: >-
+      Monitoring of routers, switches, firewalls, load balancers and wireless devices,
+      including interface status and utilisation.
+    keywords: [network, router, switch, firewall, load balancer, wan, lan, wireless, snmp, interface, bandwidth, branch]
+    verified: false
+  - id: traffic_flow_analysis
+    name: Network traffic flow analysis
+    category: Infrastructure
+    description: >-
+      Analysis of flow data exported by network devices to understand which hosts and
+      applications consume bandwidth.
+    keywords: [netflow, sflow, flow, top talkers, traffic, bandwidth hog, congestion]
+    verified: false
+  - id: cloud_monitoring
+    name: Public cloud monitoring
+    category: Cloud
+    description: >-
+      Visibility into public cloud resources and services alongside on-premises
+      infrastructure.
+    keywords: [cloud, aws, azure, gcp, google cloud, ec2, rds, lambda, s3, cloud migration, hybrid cloud, multi-cloud]
+    verified: false
+  - id: container_monitoring
+    name: Container and Kubernetes monitoring
+    category: Cloud
+    description: >-
+      Monitoring of Kubernetes clusters, nodes, workloads and containers, including
+      environments where resources change frequently.
+    keywords: [kubernetes, k8s, container, containers, pod, pods, eks, aks, gke, openshift, docker, microservices]
+    verified: false
+  - id: log_analysis
+    name: Log analysis
+    category: Observability
+    description: >-
+      Ingestion and search of log data, viewed in context with the metrics and alerts of
+      the related resources.
+    keywords: [log, logs, syslog, event log, log search, log analysis, troubleshooting, root cause]
+    verified: false
+  - id: application_tracing
+    name: Application performance and tracing
+    category: Observability
+    description: >-
+      Collection of application traces and service-level metrics, typically through
+      OpenTelemetry-based instrumentation.
+    keywords: [apm, application performance, tracing, traces, opentelemetry, otel, latency, microservices, code-level]
+    verified: false
+  - id: synthetic_monitoring
+    name: Website and synthetic checks
+    category: Observability
+    description: >-
+      Scheduled checks of websites and endpoints from one or more locations to measure
+      availability and response time.
+    keywords: [website, synthetic, url, endpoint, uptime, availability check, ssl certificate, web check, customer-facing]
+    verified: false
+  - id: alerting_escalation
+    name: Alerting and escalation
+    category: Operations
+    description: >-
+      Threshold-based alert rules with routing and escalation to the right people or
+      teams.
+    keywords: [alert, alerts, alerting, escalation, on-call, paging, notification, noise, alert fatigue, threshold]
+    verified: false
+  - id: anomaly_detection
+    name: Dynamic thresholds and anomaly detection
+    category: Operations
+    description: >-
+      Thresholds derived from historical behaviour to flag unusual values and reduce
+      manually maintained static thresholds.
+    keywords: [anomaly, anomalies, baseline, dynamic threshold, false positive, false positives, noise, seasonality]
+    verified: false
+  - id: event_correlation
+    name: Event correlation and noise reduction
+    category: Operations
+    description: >-
+      Grouping of related alerts and events to reduce duplicate notifications and help
+      identify likely causes.
+    keywords: [correlation, alert storm, deduplication, noise reduction, aiops, root cause, incident, mttr]
+    verified: false
+  - id: dashboards_reporting
+    name: Dashboards and reporting
+    category: Visibility
+    description: >-
+      Configurable dashboards and scheduled reports for operational teams and
+      management.
+    keywords: [dashboard, dashboards, report, reports, reporting, visibility, executive, sla, capacity, trend]
+    verified: false
+  - id: topology_mapping
+    name: Topology and dependency mapping
+    category: Visibility
+    description: >-
+      Visual maps of relationships between resources to help understand impact and
+      dependencies.
+    keywords: [topology, dependency, dependencies, map, mapping, relationships, impact analysis, service map]
+    verified: false
+  - id: service_views
+    name: Business service views
+    category: Visibility
+    description: >-
+      Grouping of resources into business or application services to view and alert on
+      service-level health.
+    keywords: [business service, service health, service level, application owner, slo, customer impact, service view]
+    verified: false
+  - id: config_change_tracking
+    name: Configuration change tracking
+    category: Operations
+    description: >-
+      Collection of device configuration and detection of changes, useful when a change
+      is the suspected cause of an incident.
+    keywords: [configuration, config, change, changes, config backup, drift, compliance, audit]
+    verified: false
+  - id: itsm_integration
+    name: ITSM and collaboration integrations
+    category: Integrations
+    description: >-
+      Sending alerts to ticketing, paging and chat tools so incidents follow existing
+      operational processes.
+    keywords: [itsm, ticket, tickets, ticketing, servicenow, jira, pagerduty, slack, teams, incident management, cmdb]
+    verified: false
+  - id: api_automation
+    name: API and automation
+    category: Integrations
+    description: >-
+      Programmatic access for automating onboarding, configuration and data export
+      using APIs and scripting.
+    keywords: [api, automation, script, scripting, powershell, python, terraform, ansible, infrastructure as code, export]
+    verified: false
+  - id: custom_monitoring
+    name: Custom and extensible monitoring
+    category: Extensibility
+    description: >-
+      Ability to extend monitoring with custom collection logic for devices or
+      applications that are not covered out of the box.
+    keywords: [custom, extensible, scripted, proprietary, in-house application, unsupported device, logicmodule, datasource]
+    verified: false
+  - id: multi_tenancy
+    name: Multi-tenant administration
+    category: Administration
+    description: >-
+      Separation of resources, users and permissions for different teams, business
+      units or customers.
+    keywords: [msp, multi-tenant, tenant, tenants, business unit, rbac, role-based, permissions, separation]
+    verified: false
