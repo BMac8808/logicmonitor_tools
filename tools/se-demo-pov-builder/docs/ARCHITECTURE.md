@@ -195,6 +195,7 @@ All routes are under `/api`. Interactive docs: `http://127.0.0.1:8000/docs`.
 | Adapters | `GET /adapters`, `POST /adapters/{id}/actions/{action}` |
 | LogicMonitor work | `POST /pov-plans/{id}/readiness`, `POST /pov-plans/{id}/setup-script`, `GET /library/ecosystem` |
 | Handoff | `GET /deals/{id}/handoff`, `GET /handoff/schema` |
+| Integrations | `POST /integrations/opportunities` (link a system-of-record opportunity to a deal) |
 | LLM | `GET /llm/status`, `POST /deals/{id}/llm/discovery-summary` |
 
 ## Security posture

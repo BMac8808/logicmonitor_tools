@@ -16,7 +16,8 @@ function CapabilityPicker({ value, onChange }: { value: string[]; onChange: (v: 
 export default function RequirementsTab({ dealId, onChange }: { dealId: number; onChange: () => void }) {
   const lib = useLibrary();
   const reqs = useAsync(() => api.requirements(dealId), [dealId]);
-  const [form, setForm] = useState({ title: "", description: "", pain_point: "", priority: "should" as Priority, category: "technical" as "technical" | "business" });
+  const [form, setForm] = useState({ title: "", description: "", pain_point: "", business_impact: "", priority: "should" as Priority, category: "technical" as "technical" | "business" });
+  const [impactEdit, setImpactEdit] = useState<{ id: number; value: string } | null>(null);
   const [caps, setCaps] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<CapabilityMatch[] | null>(null);
   const [editing, setEditing] = useState<number | null>(null);
@@ -33,7 +34,7 @@ export default function RequirementsTab({ dealId, onChange }: { dealId: number; 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
     if (await attempt(() => api.createRequirement(dealId, { ...form, capability_ids: caps }), setError)) {
-      setForm({ ...form, title: "", description: "", pain_point: "" });
+      setForm({ ...form, title: "", description: "", pain_point: "", business_impact: "" });
       setCaps([]);
       setSuggestions(null);
       await reqs.reload();
@@ -78,6 +79,7 @@ export default function RequirementsTab({ dealId, onChange }: { dealId: number; 
             </select>
           </label>
           <label className="full">Pain point (customer's words)<textarea value={form.pain_point} onChange={(e) => setForm({ ...form, pain_point: e.target.value })} /></label>
+          <label className="full">Business impact (customer's numbers)<input value={form.business_impact} onChange={(e) => setForm({ ...form, business_impact: e.target.value })} placeholder="e.g. 3h20m outage delayed ~40 shipments/hour" /></label>
           <label className="full">Description<input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
           <div className="full">
             <div className="row spread">
@@ -107,6 +109,19 @@ export default function RequirementsTab({ dealId, onChange }: { dealId: number; 
                   <td>
                     <strong>{r.title}</strong>
                     {r.pain_point && <div className="small">Pain: {r.pain_point}</div>}
+                    {impactEdit?.id === r.id ? (
+                      <div className="row small">
+                        <input aria-label={`Business impact for ${r.title}`} value={impactEdit.value} style={{ flex: 1 }}
+                          onChange={(e) => setImpactEdit({ id: r.id, value: e.target.value })} />
+                        <button type="button" onClick={async () => { await update(r, { business_impact: impactEdit.value }); setImpactEdit(null); }}>Save</button>
+                        <button type="button" className="secondary" onClick={() => setImpactEdit(null)}>Cancel</button>
+                      </div>
+                    ) : (
+                      <div className="small">
+                        Impact: {r.business_impact || <span className="muted">not captured</span>}{" "}
+                        <button type="button" className="link small" onClick={() => setImpactEdit({ id: r.id, value: r.business_impact ?? "" })}>Edit</button>
+                      </div>
+                    )}
                     {r.source_question_id && <div className="muted small">From discovery: <code>{r.source_question_id}</code></div>}
                     {(() => {
                       const refs = lib.ecosystem.references.filter((ref) => ref.capabilities.some((c) => r.capability_ids.includes(c)));

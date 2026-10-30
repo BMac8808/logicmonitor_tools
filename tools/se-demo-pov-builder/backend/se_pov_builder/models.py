@@ -47,6 +47,13 @@ class Deal(TimestampMixin, Base):
     business_drivers: Mapped[str] = mapped_column(Text, default="")
     technical_context: Mapped[list[str]] = mapped_column(JSON, default=list)
     target_close: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Link to a record in a system of record (e.g. an LMDA opportunity). See api/integrations.py.
+    external_system: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    external_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    external_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    # URL template the system of record wants users sent to for importing this deal back;
+    # "{deal_url}" is replaced with this deal's URL.
+    external_import_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
     account: Mapped[Account] = relationship(back_populates="deals")
     stakeholders: Mapped[list[Stakeholder]] = relationship(cascade="all, delete-orphan")
@@ -67,6 +74,7 @@ class Stakeholder(TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(200))
     title: Mapped[str] = mapped_column(String(200), default="")
     persona_id: Mapped[str] = mapped_column(String(80))
+    email: Mapped[str | None] = mapped_column(String(254), nullable=True)
     influence: Mapped[str] = mapped_column(String(20), default="medium")
     stance: Mapped[str] = mapped_column(String(20), default="unknown")
     notes: Mapped[str] = mapped_column(Text, default="")
@@ -97,6 +105,7 @@ class Requirement(TimestampMixin, Base):
     category: Mapped[str] = mapped_column(String(20), default="technical")
     priority: Mapped[str] = mapped_column(String(10), default="should")
     pain_point: Mapped[str] = mapped_column(Text, default="")
+    business_impact: Mapped[str | None] = mapped_column(Text, nullable=True)
     source_question_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
     capability_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
     status: Mapped[str] = mapped_column(String(20), default="draft")

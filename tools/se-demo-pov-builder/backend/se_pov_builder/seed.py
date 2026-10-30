@@ -68,6 +68,8 @@ def seed_sample_engagement(session: Session, kb: KnowledgeBase, today: date | No
         "jo": Stakeholder(deal_id=deal.id, name="Jo Kim", title="NOC Lead", persona_id="practitioner",
                           influence="medium", stance="supporter", notes="Team handles ~2,500 alerts a week."),
     }
+    for key, person in people.items():
+        person.email = f"{key}@quillfeather.example.invalid"  # reserved .invalid domain: never deliverable
     session.add_all(people.values())
     session.flush()
 
@@ -121,9 +123,17 @@ def seed_sample_engagement(session: Session, kb: KnowledgeBase, today: date | No
         ("Monthly availability summary for the CIO", "could", "business",
          "Leadership reporting is assembled manually.", None, ["dashboards_reporting", "service_views"]),
     ]
+    impacts = {
+        "Monitor warehouse network devices and WAN links across 35 sites":
+            "About 40 delayed shipments per hour of warehouse system downtime (Dana's estimate).",
+        "Reduce non-actionable alerts": "NOC time lost triaging ~2,250 non-actionable alerts a week; on-call fatigue.",
+        "Correlate metrics, logs and configuration changes during incidents":
+            "Last outage took 3h20m to resolve across four tools.",
+    }
     reqs = []
     for title, priority, category, pain, qid, caps in req_specs:
         r = Requirement(deal_id=deal.id, title=title, priority=priority, category=category, pain_point=pain,
+                        business_impact=impacts.get(title),
                         source_question_id=qid, capability_ids=caps, status="confirmed" if qid else "draft")
         session.add(r)
         reqs.append(r)

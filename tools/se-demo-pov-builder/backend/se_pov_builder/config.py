@@ -32,6 +32,8 @@ class Settings:
     content_dir: Path = TOOL_ROOT
     host: str = "127.0.0.1"
     port: int = 8000
+    # Base URL people use to open this app (for deal links handed to other systems).
+    public_url: str = "http://127.0.0.1:8000"
     api_token: str = ""
     cors_origins: list[str] = field(default_factory=list)
     allow_sample_data: bool = True
@@ -57,6 +59,7 @@ class Settings:
             content_dir=Path(_env("CONTENT_DIR", str(TOOL_ROOT))),
             host=_env("HOST", "127.0.0.1"),
             port=int(_env("PORT", "8000")),
+            public_url=_env("PUBLIC_URL", "http://127.0.0.1:8000").rstrip("/"),
             api_token=_env("API_TOKEN"),
             cors_origins=[o.strip() for o in origins.split(",") if o.strip()],
             allow_sample_data=_env_bool("ALLOW_SAMPLE_DATA", True),

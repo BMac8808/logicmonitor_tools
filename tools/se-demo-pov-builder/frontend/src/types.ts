@@ -39,6 +39,9 @@ export interface Deal {
   technical_context: string[];
   target_close: string | null;
   updated_at: string;
+  external_system: string | null;
+  external_id: string | null;
+  external_url: string | null;
 }
 
 export interface DealListItem extends Deal {
@@ -65,6 +68,7 @@ export interface DealMetrics {
 export interface DealDetail extends Deal {
   account: Account;
   metrics: DealMetrics;
+  external_import_link: string | null;
 }
 
 export interface Stakeholder {
@@ -73,6 +77,7 @@ export interface Stakeholder {
   name: string;
   title: string;
   persona_id: string;
+  email: string | null;
   influence: Influence;
   stance: Stance;
   notes: string;
@@ -184,6 +189,7 @@ export interface Requirement {
   category: "business" | "technical";
   priority: Priority;
   pain_point: string;
+  business_impact: string | null;
   source_question_id: string | null;
   capability_ids: string[];
   status: "draft" | "confirmed";

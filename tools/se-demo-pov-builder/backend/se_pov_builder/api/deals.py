@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
 from ..knowledge import KnowledgeBase
@@ -35,6 +35,7 @@ from ..schemas import (
 from ..services.discovery import analyse_gaps, applicable_questions
 from ..services.workflow_engine import CLOSED
 from .deps import deal_or_404, get_db, get_kb, get_or_404
+from .integrations import import_link
 
 router = APIRouter()
 
@@ -134,11 +135,12 @@ def deal_metrics(db: Session, kb: KnowledgeBase, deal: Deal) -> dict:
 
 
 @router.get("/deals/{deal_id}", response_model=DealDetail)
-def get_deal(deal: Deal = Depends(deal_or_404), db: Session = Depends(get_db),
+def get_deal(request: Request, deal: Deal = Depends(deal_or_404), db: Session = Depends(get_db),
              kb: KnowledgeBase = Depends(get_kb)) -> DealDetail:
     return DealDetail(**DealOut.model_validate(deal).model_dump(),
                       account=AccountOut.model_validate(deal.account),
-                      metrics=deal_metrics(db, kb, deal))
+                      metrics=deal_metrics(db, kb, deal),
+                      external_import_link=import_link(deal, request.app.state.settings.public_url))
 
 
 @router.patch("/deals/{deal_id}", response_model=DealOut)

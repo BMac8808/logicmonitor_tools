@@ -67,9 +67,9 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None,
                  (time.perf_counter() - start) * 1000)
         return response
 
-    from .api import deals, discovery, meta, plans, workflows
+    from .api import deals, discovery, integrations, meta, plans, workflows
 
-    for module in (meta, deals, discovery, plans, workflows):
+    for module in (meta, deals, discovery, plans, workflows, integrations):
         app.include_router(module.router, prefix="/api")
 
     dist = settings.frontend_dist

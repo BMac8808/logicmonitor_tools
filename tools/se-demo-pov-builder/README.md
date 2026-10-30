@@ -88,7 +88,7 @@ API with the LLM disabled. Acceptance criteria and how each is verified:
 | POV toolkit catalogue and links to public tooling | **Implemented** | `knowledge/lm_ecosystem.yaml`: community dashboards/LogicModules, monitoring recipes, LMDA Composer docs |
 | Handoff export to downstream SE platforms (e.g. LMDA) | **Implemented** | Versioned JSON plus JSON Schema; see [docs/HANDOFF_FORMAT.md](docs/HANDOFF_FORMAT.md) |
 | Direct LogicMonitor REST client in this app | **Not planned** | Portal access goes through the public MCP server and PowerShell module instead |
-| Push the handoff directly into LMDA | **Proposed** | Needs an import endpoint on the LMDA side; today the JSON file is handed over |
+| LMDA round trip (opportunity → deal → POV import) | **Implemented (POC)** | This repo: integration endpoint, deal links, handoff fields. LMDA side (workspace tool card, preview/import into POV challenges, decision/success criteria with activities, contacts) is delivered to the LMDA team separately; tested end to end against a local LMDA instance with fictional data |
 | Multi-user, authentication, audit log | **Proposed** | |
 | Database migrations (Alembic) | **Proposed** | Currently `create_all` |
 | DOCX/PDF export | **Proposed** | Markdown today |
@@ -129,7 +129,8 @@ community tooling (pinned in `knowledge/lm_ecosystem.yaml`, details in
 | Check POV readiness (read-only) | [logicmonitor-api-mcp](https://github.com/logicmonitor/logicmonitor-api-mcp) | POV tab → **Run readiness check** |
 | Create POV resource groups, import POV LogicModules | [Logic.Monitor PowerShell module](https://github.com/logicmonitor/lm-powershell-module) + [LogicMonitor-Dashboards](https://github.com/stevevillardi/LogicMonitor-Dashboards) | POV tab → **Download setup script (.ps1)** |
 | Build custom monitoring for a requirement | [monitoring-recipes](https://github.com/logicmonitor/monitoring-recipes), [LMDA Composer](https://stevevillardi.github.io/lmda-composer-vscode-docs/) | Requirements tab → "Related public tooling" |
-| Continue in the POV tracker | LMDA (internal) | Deal header → **Export LMDA handoff (JSON)** |
+| Start from an LMDA opportunity | LMDA (internal) "SE Demo & POV Builder" workspace tool | Calls `POST /api/integrations/opportunities`; the deal is linked |
+| Continue in the POV tracker | LMDA (internal) Scoping Doc → **Import from SE Builder** | Deal header → **Send to LMDA** (linked deals) or **Export LMDA handoff (JSON)** |
 
 Run the setup script yourself after reviewing it:
 

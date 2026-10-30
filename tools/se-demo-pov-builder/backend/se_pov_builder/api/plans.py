@@ -189,11 +189,11 @@ def pov_setup_script(plan_id: int, body: SetupScriptIn, db: Session = Depends(ge
 
 
 @router.get("/deals/{deal_id}/handoff")
-def deal_handoff(deal: Deal = Depends(deal_or_404), db: Session = Depends(get_db),
+def deal_handoff(request: Request, deal: Deal = Depends(deal_or_404), db: Session = Depends(get_db),
                  kb: KnowledgeBase = Depends(get_kb), pov_plan_id: int | None = None) -> JSONResponse:
     """Versioned handoff package for downstream SE platforms (see docs/HANDOFF_FORMAT.md)."""
     try:
-        package = build_handoff(db, kb, deal, pov_plan_id)
+        package = build_handoff(db, kb, deal, pov_plan_id, request.app.state.settings.public_url)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
     return JSONResponse(package.model_dump(mode="json"), headers={

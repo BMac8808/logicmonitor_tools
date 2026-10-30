@@ -3,7 +3,7 @@ import { api } from "../../api";
 import type { Influence, Stakeholder, Stance } from "../../types";
 import { attempt, Badge, Empty, ErrorBanner, StatusBadge, useAsync, useLibrary } from "../../ui";
 
-const blank = { name: "", title: "", persona_id: "", influence: "medium" as Influence, stance: "unknown" as Stance, notes: "" };
+const blank = { name: "", title: "", email: "", persona_id: "", influence: "medium" as Influence, stance: "unknown" as Stance, notes: "" };
 
 export default function StakeholdersTab({ dealId, onChange }: { dealId: number; onChange: () => void }) {
   const lib = useLibrary();
@@ -14,7 +14,7 @@ export default function StakeholdersTab({ dealId, onChange }: { dealId: number; 
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (await attempt(() => api.addStakeholder(dealId, form), setError)) {
+    if (await attempt(() => api.addStakeholder(dealId, { ...form, email: form.email.trim() || null }), setError)) {
       setForm({ ...blank, persona_id: form.persona_id });
       await list.reload();
       onChange();
@@ -50,6 +50,7 @@ export default function StakeholdersTab({ dealId, onChange }: { dealId: number; 
         <div className="form-grid">
           <label>Name<input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
           <label>Title<input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
+          <label>Email (optional)<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Needed to import as an LMDA POV contact" /></label>
           <label>
             Persona
             <select value={form.persona_id} onChange={(e) => setForm({ ...form, persona_id: e.target.value })}>
@@ -88,7 +89,7 @@ export default function StakeholdersTab({ dealId, onChange }: { dealId: number; 
                   <tr key={s.id}>
                     <td>
                       <strong>{s.name}</strong>
-                      <div className="muted small">{s.title}</div>
+                      <div className="muted small">{s.title}{s.email && <> · {s.email}</>}</div>
                       {s.notes && <div className="small">{s.notes}</div>}
                       {expanded === s.id && persona && (
                         <div className="small" style={{ marginTop: 8 }}>

@@ -38,11 +38,25 @@ export default function DealWorkspace({ dealId, tab, llmEnabled }: { dealId: num
           <div className="muted small"><a href="#/">Deals</a> / {d.account.name}</div>
           <h1>{d.name}</h1>
         </div>
+        <div className="row">
+        {d.external_system && (
+          <span className="small muted">
+            Linked to {d.external_system.toUpperCase()}{" "}
+            {d.external_url ? <a href={d.external_url} target="_blank" rel="noreferrer">{d.external_id}</a> : d.external_id}
+          </span>
+        )}
+        {d.external_import_link && (
+          <a className="button-link" href={d.external_import_link} target="_blank" rel="noreferrer"
+            title="Opens the LMDA Scoping Doc with this deal ready to import">
+            Send to LMDA
+          </a>
+        )}
         <button type="button" className="secondary" title="Versioned JSON package for downstream SE platforms such as LMDA"
           onClick={() => attempt(async () => downloadText(`handoff-${slug(d.name)}.json`,
             JSON.stringify(await api.handoff(dealId), null, 2), "application/json"), setError)}>
           Export LMDA handoff (JSON)
         </button>
+        </div>
       </div>
       <ErrorBanner error={error} onDismiss={() => setError(null)} />
       <nav className="tabs" aria-label="Deal sections">

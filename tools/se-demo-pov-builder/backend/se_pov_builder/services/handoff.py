@@ -57,8 +57,17 @@ class HOpportunity(BaseModel):
     technical_scope: list[HScope]
 
 
+class HSource(BaseModel):
+    """Where the package came from, so importers can link back and detect re-imports."""
+    deal_id: int
+    deal_url: str
+    external_system: str | None
+    external_id: str | None
+
+
 class HContact(BaseModel):
     name: str
+    email: str | None = None
     title: str
     persona_id: str
     persona: str
@@ -96,6 +105,7 @@ class HChallenge(BaseModel):
     title: str
     description: str
     pain_point: str
+    business_impact: str | None = None
     priority: Literal["must", "should", "could"]
     category: Literal["business", "technical"]
     status: str
@@ -171,6 +181,7 @@ class HandoffPackage(BaseModel):
     generated_at: datetime
     generator: str
     data_classification: Literal["synthetic", "customer"]
+    source: HSource | None = None
     account: HAccount
     opportunity: HOpportunity
     contacts: list[HContact]
@@ -185,7 +196,14 @@ class HandoffPackage(BaseModel):
     gaps: list[HGap]
 
 
-def build_handoff(session: Session, kb: KnowledgeBase, deal: Deal, pov_plan_id: int | None = None) -> HandoffPackage:
+def deal_url(public_url: str, deal_id: int) -> str:
+    return f"{public_url.rstrip('/')}/#/deals/{deal_id}"
+
+
+def build_handoff(
+    session: Session, kb: KnowledgeBase, deal: Deal, pov_plan_id: int | None = None,
+    public_url: str = "http://127.0.0.1:8000",
+) -> HandoffPackage:
     account = deal.account
     stakeholders = session.query(Stakeholder).filter_by(deal_id=deal.id).order_by(Stakeholder.id).all()
     answers = session.query(DiscoveryAnswer).filter_by(deal_id=deal.id).order_by(DiscoveryAnswer.id).all()
@@ -245,6 +263,8 @@ def build_handoff(session: Session, kb: KnowledgeBase, deal: Deal, pov_plan_id: 
         generated_at=utcnow(),
         generator=f"se-demo-pov-builder {__version__}",
         data_classification="synthetic" if account.is_synthetic else "customer",
+        source=HSource(deal_id=deal.id, deal_url=deal_url(public_url, deal.id),
+                       external_system=deal.external_system, external_id=deal.external_id),
         account=HAccount(name=account.name, industry=account.industry, region=account.region,
                          employee_band=account.employee_band, is_synthetic=account.is_synthetic),
         opportunity=HOpportunity(
@@ -253,7 +273,7 @@ def build_handoff(session: Session, kb: KnowledgeBase, deal: Deal, pov_plan_id: 
             technical_scope=[HScope(tag=t, label=kb.context_tags[t].label) for t in deal.technical_context
                              if t in kb.context_tags],
         ),
-        contacts=[HContact(name=s.name, title=s.title, persona_id=s.persona_id,
+        contacts=[HContact(name=s.name, email=s.email, title=s.title, persona_id=s.persona_id,
                            persona=kb.personas[s.persona_id].name if s.persona_id in kb.personas else s.persona_id,
                            influence=s.influence, stance=s.stance, notes=s.notes) for s in stakeholders],
         discovery=[HDiscoveryItem(
@@ -267,6 +287,7 @@ def build_handoff(session: Session, kb: KnowledgeBase, deal: Deal, pov_plan_id: 
         qualification=qualification,
         decision_criteria_notes=decision.answer if decision else None,
         challenges=[HChallenge(id=r.id, title=r.title, description=r.description, pain_point=r.pain_point,
+                               business_impact=r.business_impact or None,
                                priority=r.priority, category=r.category, status=r.status,
                                capabilities=caps(r.capability_ids), source_question_id=r.source_question_id)
                     for r in reqs],

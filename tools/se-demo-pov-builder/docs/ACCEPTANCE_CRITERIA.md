@@ -29,3 +29,5 @@ Each criterion lists how it is verified. "Journey test" means
 | AC22 | A Logic.Monitor setup script can be generated for a POV: dry run unless `-Apply`, no embedded credentials, pinned public sources, dependencies resolved, existing modules never overwritten, user text safely escaped. | `test_lm_integration.py` |
 | AC23 | A versioned handoff package (with JSON Schema) can be exported for downstream SE platforms; simulated evidence is flagged. | `test_lm_integration.py` |
 | AC24 | Public LM tooling is catalogued with pinned commits and licences; references are validated. | `test_knowledge.py`; `make validate-content` |
+| AC25 | A system of record can link an opportunity to a deal idempotently; linked deals expose a "Send to LMDA" link built from the system's own template; URLs must be http(s). | `test_integrations.py`; `DealWorkspace.test.tsx` |
+| AC26 | The handoff carries the deal link, stakeholder emails and per-requirement business impact for importers. | `test_integrations.py` |

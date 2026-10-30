@@ -31,7 +31,7 @@ frontend:
 
 dev:
 	@echo "API: http://127.0.0.1:8000/docs   UI: http://127.0.0.1:5173"
-	@trap 'kill 0' INT TERM EXIT; $(BIN)/python -m se_pov_builder & (cd frontend && npm run dev); wait
+	@trap 'kill 0' INT TERM EXIT; SEPB_PUBLIC_URL=$${SEPB_PUBLIC_URL:-http://127.0.0.1:5173} $(BIN)/python -m se_pov_builder & (cd frontend && npm run dev); wait
 
 build:
 	cd frontend && npm run build

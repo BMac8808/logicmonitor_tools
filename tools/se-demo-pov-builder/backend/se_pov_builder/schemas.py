@@ -18,6 +18,8 @@ EvidenceType = Literal["observation", "screenshot", "document", "metric", "custo
 PovStatus = Literal["draft", "active", "completed", "closed"]
 
 Name = Field(min_length=1, max_length=200)
+# Deliberately simple; the system of record validates emails again on import.
+EMAIL_PATTERN = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
 
 
 class ORM(BaseModel):
@@ -81,6 +83,10 @@ class DealOut(ORM):
     business_drivers: str
     technical_context: list[str]
     target_close: date | None
+    external_system: str | None = None
+    external_id: str | None = None
+    external_url: str | None = None
+    external_import_url: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -92,6 +98,8 @@ class DealListItem(DealOut):
 class DealDetail(DealOut):
     account: AccountOut
     metrics: dict[str, Any]
+    # Link that opens the system of record's import for this deal (None when not linked).
+    external_import_link: str | None = None
 
 
 # --- Stakeholders ------------------------------------------------------------
@@ -99,6 +107,7 @@ class StakeholderIn(BaseModel):
     name: str = Name
     title: str = ""
     persona_id: str
+    email: str | None = Field(default=None, max_length=254, pattern=EMAIL_PATTERN)
     influence: Influence = "medium"
     stance: Stance = "unknown"
     notes: str = ""
@@ -108,6 +117,7 @@ class StakeholderPatch(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=200)
     title: str | None = None
     persona_id: str | None = None
+    email: str | None = Field(default=None, max_length=254, pattern=EMAIL_PATTERN)
     influence: Influence | None = None
     stance: Stance | None = None
     notes: str | None = None
@@ -119,6 +129,7 @@ class StakeholderOut(ORM):
     name: str
     title: str
     persona_id: str
+    email: str | None
     influence: str
     stance: str
     notes: str
@@ -182,6 +193,7 @@ class RequirementIn(BaseModel):
     category: Literal["business", "technical"] = "technical"
     priority: Priority = "should"
     pain_point: str = ""
+    business_impact: str = ""
     source_question_id: str | None = None
     capability_ids: list[str] | None = None  # None = auto-suggest
     status: Literal["draft", "confirmed"] = "draft"
@@ -193,6 +205,7 @@ class RequirementPatch(BaseModel):
     category: Literal["business", "technical"] | None = None
     priority: Priority | None = None
     pain_point: str | None = None
+    business_impact: str | None = None
     capability_ids: list[str] | None = None
     status: Literal["draft", "confirmed"] | None = None
 
@@ -205,6 +218,7 @@ class RequirementOut(ORM):
     category: str
     priority: str
     pain_point: str
+    business_impact: str | None
     source_question_id: str | None
     capability_ids: list[str]
     status: str
