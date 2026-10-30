@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api } from "../api";
 import { attempt, Badge, ErrorBanner, useAsync, useLibrary } from "../ui";
 
-type Section = "personas" | "capabilities" | "scenarios" | "workflows";
+type Section = "personas" | "capabilities" | "scenarios" | "workflows" | "tooling";
 
 export default function LibraryPage({ onReloaded }: { onReloaded: () => void }) {
   const lib = useLibrary();
@@ -34,10 +34,10 @@ export default function LibraryPage({ onReloaded }: { onReloaded: () => void }) 
       <ErrorBanner error={error} onDismiss={() => setError(null)} />
       {message && <div className="banner banner-info">{message}</div>}
       <nav className="tabs">
-        {(["personas", "capabilities", "scenarios", "workflows"] as Section[]).map((s) => (
+        {(["personas", "capabilities", "scenarios", "workflows", "tooling"] as Section[]).map((s) => (
           <a key={s} href="#/library" className={section === s ? "active" : undefined}
             onClick={(e) => { e.preventDefault(); setSection(s); }}>
-            {s[0].toUpperCase() + s.slice(1)}
+            {s === "tooling" ? "LM tooling" : s[0].toUpperCase() + s.slice(1)}
           </a>
         ))}
       </nav>
@@ -97,6 +97,42 @@ export default function LibraryPage({ onReloaded }: { onReloaded: () => void }) 
               <div className="chips">{s.capabilities.map((c) => <Badge key={c}>{lib.capabilityName(c)}</Badge>)}</div>
             </div>
           ))}
+        </div>
+      )}
+
+      {section === "tooling" && (
+        <div>
+          <p className="muted">
+            Public community projects this app reuses for anything that touches a LogicMonitor portal, pinned to reviewed
+            commits (<code>knowledge/lm_ecosystem.yaml</code>). Their own licences apply; nothing is copied into this repository.
+          </p>
+          <div className="card">
+            <table>
+              <thead><tr><th>Project</th><th>Licence</th><th>Used for</th><th>Pinned</th></tr></thead>
+              <tbody>
+                {lib.ecosystem.projects.map((p) => (
+                  <tr key={p.id}>
+                    <td><a href={p.docs || `https://github.com/${p.repo}`} target="_blank" rel="noreferrer">{p.name}</a>
+                      <div className="muted small">{p.repo}</div></td>
+                    <td className="small">{p.license}</td>
+                    <td className="small">{p.used_for}{p.install && <div><code>{p.install}</code></div>}</td>
+                    <td className="small"><code>{p.commit.slice(0, 12)}</code></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="card">
+            <h3>Reference material by capability</h3>
+            <ul>
+              {lib.ecosystem.references.map((r) => (
+                <li key={r.id}>
+                  <a href={r.source_url} target="_blank" rel="noreferrer">{r.title}</a>{" "}
+                  <span className="muted small">({r.project_name}; {r.capabilities.map(lib.capabilityName).join(", ")})</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
 

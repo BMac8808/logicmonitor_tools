@@ -83,8 +83,12 @@ API with the LLM disabled. Acceptance criteria and how each is verified:
 | Next actions (owner, due date, status, blocker, dependencies) | **Implemented** | |
 | Optional API token | **Implemented** | `SEPB_API_TOKEN` |
 | Optional LLM: discovery summary draft (Ollama / OpenAI-compatible) | **Implemented, off by default** | Output labelled as an AI draft, never auto-saved |
-| Adapters: REST API, PowerShell, LogicModule utilities, MCP | **Mock only** | Synthetic fixtures; state-changing actions require authorization and only dry-run |
-| Live integrations with any real portal | **Proposed** | Only after verification against official documentation |
+| POV readiness check (collectors, POV resource group, critical alerts) | **Implemented** | Read-only, via the public [logicmonitor-api-mcp](https://github.com/logicmonitor/logicmonitor-api-mcp) server. Mock mode by default; `SEPB_ADAPTER_MODE=mcp` reads a real portal. Results can be attached as evidence (mock results are flagged simulated). |
+| POV portal setup script | **Implemented** | Generated [Logic.Monitor](https://github.com/logicmonitor/lm-powershell-module) PowerShell: resource groups plus selected toolkit LogicModules from pinned public sources. Dry run unless `-Apply`. Not executed in CI (see limitations). |
+| POV toolkit catalogue and links to public tooling | **Implemented** | `knowledge/lm_ecosystem.yaml`: community dashboards/LogicModules, monitoring recipes, LMDA Composer docs |
+| Handoff export to downstream SE platforms (e.g. LMDA) | **Implemented** | Versioned JSON plus JSON Schema; see [docs/HANDOFF_FORMAT.md](docs/HANDOFF_FORMAT.md) |
+| Direct LogicMonitor REST client in this app | **Not planned** | Portal access goes through the public MCP server and PowerShell module instead |
+| Push the handoff directly into LMDA | **Proposed** | Needs an import endpoint on the LMDA side; today the JSON file is handed over |
 | Multi-user, authentication, audit log | **Proposed** | |
 | Database migrations (Alembic) | **Proposed** | Currently `create_all` |
 | DOCX/PDF export | **Proposed** | Markdown today |
@@ -110,11 +114,47 @@ API with the LLM disabled. Acceptance criteria and how each is verified:
    methods and owners; record evidence. Export the plan and success summary.
 7. **Workflows / Next actions.** Start any workflow, then track tasks, owners, due dates,
    blockers and dependencies.
+8. **Hand off.** **Export LMDA handoff (JSON)** in the deal header produces a versioned
+   package for the POV tracker.
+
+## Working with LogicMonitor (reuse, not reinvention)
+
+This app is the **planning front end**: deals, discovery, demo and POV planning happen
+here, before anything reaches a portal. Work that touches LogicMonitor reuses public
+community tooling (pinned in `knowledge/lm_ecosystem.yaml`, details in
+[adapters/README.md](adapters/README.md)):
+
+| Step | Tool | In the app |
+|------|------|------------|
+| Check POV readiness (read-only) | [logicmonitor-api-mcp](https://github.com/logicmonitor/logicmonitor-api-mcp) | POV tab → **Run readiness check** |
+| Create POV resource groups, import POV LogicModules | [Logic.Monitor PowerShell module](https://github.com/logicmonitor/lm-powershell-module) + [LogicMonitor-Dashboards](https://github.com/stevevillardi/LogicMonitor-Dashboards) | POV tab → **Download setup script (.ps1)** |
+| Build custom monitoring for a requirement | [monitoring-recipes](https://github.com/logicmonitor/monitoring-recipes), [LMDA Composer](https://stevevillardi.github.io/lmda-composer-vscode-docs/) | Requirements tab → "Related public tooling" |
+| Continue in the POV tracker | LMDA (internal) | Deal header → **Export LMDA handoff (JSON)** |
+
+Run the setup script yourself after reviewing it:
+
+```powershell
+Install-Module -Name Logic.Monitor -Scope CurrentUser
+$env:LM_ACCOUNT = '<portal>'; $env:LM_BEARER_TOKEN = '<token>'   # or LM_ACCESS_ID / LM_ACCESS_KEY, or New-LMCachedAccount
+./pov-setup-<account>.ps1           # dry run: read-only checks + what would change
+./pov-setup-<account>.ps1 -Apply    # make the changes
+```
+
+To read a real portal, run the MCP server yourself and point this app at it:
+
+```bash
+ENABLE_HTTP=true LM_ACCOUNT=<portal> LM_BEARER_TOKEN=<token> npx logicmonitor-api-mcp@2
+SEPB_ADAPTER_MODE=mcp make backend
+```
+
+LogicMonitor credentials stay in the MCP server and in your PowerShell session. This app
+never stores them.
 
 ## Configuration
 
 All settings are environment variables prefixed `SEPB_`; see [.env.example](.env.example).
-Key defaults: bind `127.0.0.1:8000`, SQLite at `data/sepb.db`, adapters `mock`, LLM `none`.
+Key defaults: bind `127.0.0.1:8000`, SQLite at `data/sepb.db`, adapter `mock`
+(`mcp` + `SEPB_MCP_URL` for real reads), LLM `none`.
 
 ### Optional LLM
 
@@ -134,7 +174,8 @@ When enabled, the Discovery tab offers **Draft summary**. Nothing else uses the 
 | Personas | `personas/*.yaml` | [personas/README.md](personas/README.md) |
 | Capabilities, discovery questions, demo scenarios, POV milestones | `knowledge/*.yaml` | [knowledge/README.md](knowledge/README.md) |
 | Workflows | `workflows/*.yaml` | [workflows/README.md](workflows/README.md) |
-| Mock adapter responses | `adapters/mock_responses/*.json` | [adapters/README.md](adapters/README.md) |
+| Public LM tooling, POV toolkit, reference links | `knowledge/lm_ecosystem.yaml` | [adapters/README.md](adapters/README.md) |
+| Mock MCP responses | `adapters/mock_responses/lm_mcp.json` | [adapters/README.md](adapters/README.md) |
 
 Run `make validate-content` after editing, then **Library → Reload content from disk**
 (or restart the server).
@@ -144,15 +185,24 @@ Run `make validate-content` after editing, then **Library → Reload content fro
 - Single local user. No accounts; binds to loopback. `SEPB_API_TOKEN` adds a shared
   bearer token but is not a substitute for real authentication. Don't expose the app
   on a network without your own access controls and TLS.
-- No outbound network calls unless you configure an LLM endpoint.
+- No outbound network calls unless you configure an LLM endpoint or `SEPB_ADAPTER_MODE=mcp`.
+- No LogicMonitor credentials are stored or sent by this app. The MCP server and your
+  PowerShell session hold them.
 - Request bodies are never logged; logs contain method, path, status and timing.
 - Data lives in `data/` (git-ignored). Delete `data/sepb.db` to reset.
 - Synthetic data only. The sample company and people are invented.
 
 ## Known limitations
 
-- No schema migrations: after pulling model changes, delete `data/sepb.db` (sample data
-  reloads with one click).
+- No full schema migrations: new nullable columns are added automatically to existing
+  databases; anything else requires deleting `data/sepb.db` (sample data reloads with one click).
+- Generated PowerShell scripts are covered by content tests (dry-run guards, escaping,
+  pinned sources, no credentials) but were **not executed** against PowerShell or a portal
+  in this repository's CI. Run the dry run first.
+- The MCP client was tested against a protocol-faithful fake, not a running
+  `logicmonitor-api-mcp` server. Tool names and result formats follow its source at the
+  pinned commit.
+- Readiness critical-alert counts are portal-wide, as returned by the server's alert list.
 - Single user; no concurrency control between browser tabs (last write wins).
 - Capability mapping is keyword-based and can miss synonyms; review mappings manually.
 - Demo scenario selection is greedy and rule-based, not optimal scheduling.
@@ -166,3 +216,5 @@ Run `make validate-content` after editing, then **Library → Reload content fro
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): components, data model, engines, API, security
 - [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md): phases and next milestones
 - [docs/ACCEPTANCE_CRITERIA.md](docs/ACCEPTANCE_CRITERIA.md): MVP criteria and verification
+- [docs/HANDOFF_FORMAT.md](docs/HANDOFF_FORMAT.md): handoff export for downstream SE platforms
+- [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md): public projects referenced and their licences

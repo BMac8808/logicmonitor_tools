@@ -52,6 +52,19 @@ features you have not confirmed in current official documentation. Leave
 `shared/` starts empty on purpose. Extract code into it only when a **second** tool
 actually needs it, and move it together with its tests. See [shared/README.md](shared/README.md).
 
+## Reusing other projects
+
+- **Prefer existing public LogicMonitor community tooling** (Logic.Monitor PowerShell
+  module, logicmonitor-api-mcp, LogicMonitor-Dashboards, monitoring-recipes) over writing new
+  API clients. Invoke or reference them, and pin the reviewed commit.
+- **Respect licences.** Prefer referencing, invoking or downloading at run time over
+  copying. If you do copy MPL-2.0 files, keep them in separate files under MPL-2.0 with
+  their notices. Record every referenced project in the tool's `THIRD_PARTY_NOTICES.md`.
+- **Private or internal repositories are reference only.** Their ideas can inform a
+  design, but their code, schemas, configuration and data must not be copied into this
+  public repository, even when the private copy carries an open-source licence file.
+  Publishing that code is the owner's decision, not a contributor's.
+
 ## Integrations with real APIs
 
 - Implement against official documentation only, and link the documentation section in

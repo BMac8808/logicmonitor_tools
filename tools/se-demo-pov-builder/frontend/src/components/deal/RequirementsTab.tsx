@@ -108,6 +108,16 @@ export default function RequirementsTab({ dealId, onChange }: { dealId: number; 
                     <strong>{r.title}</strong>
                     {r.pain_point && <div className="small">Pain: {r.pain_point}</div>}
                     {r.source_question_id && <div className="muted small">From discovery: <code>{r.source_question_id}</code></div>}
+                    {(() => {
+                      const refs = lib.ecosystem.references.filter((ref) => ref.capabilities.some((c) => r.capability_ids.includes(c)));
+                      return refs.length > 0 && (
+                        <div className="small">Related public tooling:{" "}
+                          {refs.map((ref, i) => (
+                            <span key={ref.id}>{i > 0 && " · "}<a href={ref.source_url} target="_blank" rel="noreferrer">{ref.title}</a></span>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td>
                     <select aria-label={`Priority for ${r.title}`} value={r.priority} onChange={(e) => update(r, { priority: e.target.value as Priority })}>

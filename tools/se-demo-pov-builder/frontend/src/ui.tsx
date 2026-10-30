@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import type { CapabilityCatalog, ContextTag, DiscoveryLibrary, Persona } from "./types";
+import type { CapabilityCatalog, ContextTag, DiscoveryLibrary, Ecosystem, Persona } from "./types";
 
 export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]) {
   const [data, setData] = useState<T | null>(null);
@@ -77,8 +77,8 @@ export function Empty({ children }: { children: ReactNode }) {
   return <p className="empty">{children}</p>;
 }
 
-export function downloadText(filename: string, text: string): void {
-  const url = URL.createObjectURL(new Blob([text], { type: "text/markdown" }));
+export function downloadText(filename: string, text: string, type = "text/markdown"): void {
+  const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
@@ -97,6 +97,7 @@ export interface Library {
   capabilityName: (id: string) => string;
   discovery: DiscoveryLibrary;
   contextTags: ContextTag[];
+  ecosystem: Ecosystem;
 }
 
 export const LibraryContext = createContext<Library | null>(null);
@@ -107,7 +108,9 @@ export function useLibrary(): Library {
   return lib;
 }
 
-export function buildLibrary(personas: Persona[], capabilities: CapabilityCatalog, discovery: DiscoveryLibrary): Library {
+export function buildLibrary(
+  personas: Persona[], capabilities: CapabilityCatalog, discovery: DiscoveryLibrary, ecosystem: Ecosystem,
+): Library {
   const capNames = Object.fromEntries(capabilities.capabilities.map((c) => [c.id, c.name]));
   return {
     personas: Object.fromEntries(personas.map((p) => [p.id, p])),
@@ -116,5 +119,6 @@ export function buildLibrary(personas: Persona[], capabilities: CapabilityCatalo
     capabilityName: (id) => capNames[id] ?? id,
     discovery,
     contextTags: discovery.context_tags,
+    ecosystem,
   };
 }

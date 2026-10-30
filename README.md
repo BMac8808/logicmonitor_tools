@@ -12,10 +12,26 @@ LogicMonitor: Sales Engineers, administrators, consultants and technical leaders
 
 | Tool | Status | Stack | Description |
 |------|--------|-------|-------------|
-| [SE Demo & POV Builder](tools/se-demo-pov-builder/) | MVP | Python (FastAPI) + React (TypeScript) + SQLite | Plan and track technical sales engagements: stakeholders, discovery, demo plans, Proof of Value plans and next actions. Runs locally, works without an LLM, and uses mock integrations only. |
+| [SE Demo & POV Builder](tools/se-demo-pov-builder/) | MVP | Python (FastAPI) + React (TypeScript) + SQLite | Plan and track technical sales engagements: stakeholders, discovery, demo plans, Proof of Value plans and next actions. Runs locally and works without an LLM. Portal work reuses the public MCP server and Logic.Monitor PowerShell module; exports a handoff package for LMDA. |
 
 Planned ideas (not started): inventory exporter, DataSource/LogicModule validator,
 PowerShell helper scripts. See [docs/ROADMAP.md](docs/ROADMAP.md).
+
+## Reuse before reinventing
+
+Tools here plan, prepare and document work. Anything that touches a LogicMonitor portal
+reuses existing public community projects instead of new API clients:
+
+| Project | Licence | Used for |
+|---------|---------|----------|
+| [lm-powershell-module](https://github.com/logicmonitor/lm-powershell-module) (Logic.Monitor) | MPL-2.0 | Generated setup scripts (portal changes, reviewed and run by a person) |
+| [logicmonitor-api-mcp](https://github.com/logicmonitor/logicmonitor-api-mcp) | MPL-2.0 | Read-only portal checks over MCP |
+| [LogicMonitor-Dashboards](https://github.com/stevevillardi/LogicMonitor-Dashboards) | MPL-2.0 | POV LogicModules and dashboards, downloaded from pinned commits |
+| [monitoring-recipes](https://github.com/logicmonitor/monitoring-recipes) | Apache-2.0 | Module authoring guidance and recipes |
+| [LMDA Composer docs](https://stevevillardi.github.io/lmda-composer-vscode-docs/) | — | LogicModule script development |
+
+Private or internal repositories may inform designs but their code is never copied here.
+See [CONTRIBUTING.md](CONTRIBUTING.md#reusing-other-projects).
 
 ## Repository layout
 

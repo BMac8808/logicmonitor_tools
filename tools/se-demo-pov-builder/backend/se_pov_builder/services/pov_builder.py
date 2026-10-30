@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from ..knowledge import KnowledgeBase
 from ..models import Deal, PovPlan, Requirement, SuccessCriterion, Task
+from .pov_readiness import default_group_name
 from .workflow_engine import CLOSED
 
 CRITERION_STATUSES = ("not_started", "in_progress", "met", "not_met", "waived")
@@ -30,6 +31,7 @@ def create_pov_plan(
     start_date: date,
     duration_days: int | None,
     draft_criteria: bool,
+    portal_group: str | None = None,
 ) -> PovPlan:
     template = kb.pov_template
     duration = duration_days or template.default_duration_days
@@ -40,6 +42,7 @@ def create_pov_plan(
         start_date=start_date,
         end_date=start_date + timedelta(days=duration),
         template_version=template.version,
+        portal_group=portal_group or default_group_name(deal.account),
     )
     session.add(plan)
     session.flush()

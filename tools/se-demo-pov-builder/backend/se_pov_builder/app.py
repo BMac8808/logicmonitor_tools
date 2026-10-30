@@ -6,12 +6,13 @@ import hmac
 import logging
 import time
 
+import httpx
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
 from . import __version__
-from .adapters.mock import build_registry
+from .adapters.lm_mcp import build_registry
 from .config import Settings
 from .db import init_db, make_engine, session_factory
 from .knowledge import KnowledgeBase
@@ -20,7 +21,8 @@ from .llm import LLMProvider, build_provider
 log = logging.getLogger("se_pov_builder")
 
 
-def create_app(settings: Settings | None = None, llm: LLMProvider | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, llm: LLMProvider | None = None,
+               mcp_transport: httpx.BaseTransport | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
     settings.validate()
     logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -40,7 +42,7 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None)
     app.state.engine = engine
     app.state.session_factory = session_factory(engine)
     app.state.kb = KnowledgeBase.load(settings.content_dir)
-    app.state.adapters = build_registry(settings.content_dir / "adapters" / "mock_responses")
+    app.state.adapters = build_registry(settings, settings.content_dir / "adapters" / "mock_responses", mcp_transport)
     app.state.llm = llm or build_provider(settings)
 
     app.add_middleware(

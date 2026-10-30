@@ -17,9 +17,14 @@ def test_secure_defaults(monkeypatch):
     assert all("127.0.0.1" in o or "localhost" in o for o in s.cors_origins)
 
 
-def test_live_adapter_mode_rejected(monkeypatch):
+def test_adapter_modes(monkeypatch):
     monkeypatch.setenv("SEPB_ADAPTER_MODE", "live")
-    with pytest.raises(ValueError, match="mock"):
+    with pytest.raises(ValueError, match="mock, mcp"):
+        Settings.from_env()
+    monkeypatch.setenv("SEPB_ADAPTER_MODE", "mcp")
+    assert Settings.from_env().mcp_url == "http://127.0.0.1:3000/mcp"
+    monkeypatch.setenv("SEPB_MCP_URL", "file:///etc/passwd")
+    with pytest.raises(ValueError, match="http"):
         Settings.from_env()
 
 

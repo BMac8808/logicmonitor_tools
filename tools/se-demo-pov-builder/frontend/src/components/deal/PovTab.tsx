@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
 import type { Criterion, CriterionStatus, PovPlan, Requirement } from "../../types";
+import PortalSetupCard from "./PortalSetupCard";
 import TaskTable from "./TaskTable";
 import { attempt, downloadText, Empty, ErrorBanner, SimulatedBadge, slug, StatusBadge, useAsync } from "../../ui";
 
@@ -215,6 +216,8 @@ function PovDetail({ plan, reqs, reload }: { plan: PovPlan; reqs: Requirement[];
         </div>
         <button type="submit" style={{ marginTop: 8 }}>Add criterion</button>
       </form>
+
+      <PortalSetupCard key={`${plan.id}-${plan.portal_group}`} plan={plan} reload={reload} />
 
       <div className="card">
         <h2>Milestones</h2>

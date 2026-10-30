@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Literal
+from urllib.parse import quote
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -62,6 +63,8 @@ class CapabilityCatalog(_Model):
 class ContextTag(_Model):
     id: str
     label: str
+    # Resource subgroup the POV setup script creates for this technology (None = no subgroup).
+    portal_group: str | None = None
 
 
 class QualificationItem(_Model):
@@ -154,6 +157,63 @@ class PovTemplate(_Model):
     milestones: list[PovMilestoneTemplate]
 
 
+class EcosystemProject(_Model):
+    id: str
+    name: str
+    repo: str = Field(pattern=r"^[\w.-]+/[\w.-]+$")
+    commit: str = Field(pattern=r"^[0-9a-f]{40}$")
+    license: str
+    install: str = ""
+    docs: str = ""
+    used_for: str = ""
+
+
+class _EcosystemItem(_Model):
+    id: str
+    title: str
+    project: str
+    path: str = ""
+    url: str = ""
+    capabilities: list[str] = []
+
+
+class ToolkitItem(_EcosystemItem):
+    kind: Literal["datasource", "logsource", "propertysource", "suite"]
+    format: Literal["xml", "json", "md"]
+    import_: Literal["powershell", "manual"] = Field(alias="import")
+    module_name: str = ""  # name inside the module file; used to avoid overwriting existing modules
+    purpose: str
+    milestones: list[str] = []
+    requires: list[str] = []
+    manual_steps: str = ""
+
+
+class EcosystemReference(_EcosystemItem):
+    pass
+
+
+class Ecosystem(_Model):
+    version: int
+    projects: list[EcosystemProject]
+    toolkit: list[ToolkitItem]
+    references: list[EcosystemReference]
+
+    def project(self, project_id: str) -> EcosystemProject:
+        return next(p for p in self.projects if p.id == project_id)
+
+    def source_url(self, item: _EcosystemItem) -> str:
+        """Browsable URL pinned to the reviewed commit."""
+        if item.url:
+            return item.url
+        p = self.project(item.project)
+        return f"https://github.com/{p.repo}/tree/{p.commit}/{quote(item.path)}"
+
+    def raw_url(self, item: _EcosystemItem) -> str:
+        """Download URL pinned to the reviewed commit (files only)."""
+        p = self.project(item.project)
+        return f"https://raw.githubusercontent.com/{p.repo}/{p.commit}/{quote(item.path)}"
+
+
 class ContentError(Exception):
     def __init__(self, problems: list[str]):
         self.problems = problems
@@ -203,6 +263,7 @@ class KnowledgeBase:
         scenarios: DemoScenarioLibrary,
         workflows: dict[str, WorkflowDefinition],
         pov_template: PovTemplate,
+        ecosystem: Ecosystem,
         content_dir: Path,
     ):
         self.personas = personas
@@ -215,6 +276,8 @@ class KnowledgeBase:
         self.scenarios = {s.id: s for s in scenarios.scenarios}
         self.workflows = workflows
         self.pov_template = pov_template
+        self.ecosystem = ecosystem
+        self.toolkit = {t.id: t for t in ecosystem.toolkit}
         self.content_dir = content_dir
 
     @classmethod
@@ -256,6 +319,7 @@ class KnowledgeBase:
         discovery = parse(DiscoveryLibrary, knowledge / "discovery_questions.yaml")
         scenarios = parse(DemoScenarioLibrary, knowledge / "demo_scenarios.yaml")
         pov_template = parse(PovTemplate, knowledge / "pov_template.yaml")
+        ecosystem = parse(Ecosystem, knowledge / "lm_ecosystem.yaml")
 
         if problems:
             raise ContentError(problems)
@@ -267,6 +331,7 @@ class KnowledgeBase:
             scenarios=scenarios,
             workflows=dict(sorted(workflows.items(), key=lambda kv: (kv[1].order, kv[0]))),
             pov_template=pov_template,
+            ecosystem=ecosystem,
             content_dir=content_dir,
         )
         kb._check_references()
@@ -335,6 +400,35 @@ class KnowledgeBase:
         cycle = _find_cycle(ms_edges)
         if cycle:
             problems.append(f"POV template: dependency cycle {' -> '.join(cycle)}")
+
+        eco = self.ecosystem
+        project_ids = {p.id for p in eco.projects}
+        milestone_keys = set(ms_edges)
+        dupes("ecosystem project", [p.id for p in eco.projects])
+        dupes("ecosystem item", [i.id for i in [*eco.toolkit, *eco.references]])
+        toolkit_ids = {t.id for t in eco.toolkit}
+        for item in [*eco.toolkit, *eco.references]:
+            if item.project not in project_ids:
+                problems.append(f"ecosystem item '{item.id}': unknown project '{item.project}'")
+            if bool(item.path) == bool(item.url):
+                problems.append(f"ecosystem item '{item.id}': set exactly one of 'path' or 'url'")
+            for cap in item.capabilities:
+                if cap not in self.capabilities:
+                    problems.append(f"ecosystem item '{item.id}': unknown capability '{cap}'")
+        for t in eco.toolkit:
+            for m in t.milestones:
+                if m not in milestone_keys:
+                    problems.append(f"toolkit item '{t.id}': unknown POV milestone '{m}'")
+            for r in t.requires:
+                if r not in toolkit_ids:
+                    problems.append(f"toolkit item '{t.id}': requires unknown toolkit item '{r}'")
+            if t.import_ == "powershell" and (t.kind not in ("datasource", "logsource") or t.format == "md"):
+                problems.append(f"toolkit item '{t.id}': only datasources and logsources can be imported by script")
+            if t.import_ == "powershell" and not t.module_name:
+                problems.append(f"toolkit item '{t.id}': scripted imports need 'module_name'")
+            if t.import_ == "manual" and not t.manual_steps:
+                problems.append(f"toolkit item '{t.id}': manual import needs 'manual_steps'")
+
 
         if problems:
             raise ContentError(problems)

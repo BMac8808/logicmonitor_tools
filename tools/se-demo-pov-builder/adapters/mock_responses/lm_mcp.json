@@ -1,8 +1,25 @@
 {
-  "_comment": "Synthetic fixture data.",
-  "list_tools": [
-    {"name": "example_read_tool", "kind": "read_only"},
-    {"name": "example_write_tool", "kind": "state_changing"}
+  "_comment": "Synthetic fixtures for mock mode, keyed by logicmonitor-api-mcp tool name. Field names follow the LogicMonitor REST API schema; all values are invented.",
+  "lm_collector": [
+    {"id": 11, "description": "lab-collector-a (synthetic)", "hostname": "lab-col-a.example.invalid", "status": 1, "isDown": false},
+    {"id": 12, "description": "lab-collector-b (synthetic)", "hostname": "lab-col-b.example.invalid", "status": 1, "isDown": false},
+    {"id": 13, "description": "lab-collector-c (synthetic)", "hostname": "lab-col-c.example.invalid", "status": 1, "isDown": true}
   ],
-  "query": {"answer": "Synthetic response: 2 open alerts in the lab environment.", "sources": []}
+  "lm_device_group": [
+    {"id": 1, "name": "Root", "fullPath": "", "parentId": 0, "numOfHosts": 0},
+    {"id": 101, "name": "POV - Quillfeather Freight Co. (fictional)", "fullPath": "POV - Quillfeather Freight Co. (fictional)", "parentId": 1, "numOfHosts": 41},
+    {"id": 102, "name": "Network", "fullPath": "POV - Quillfeather Freight Co. (fictional)/Network", "parentId": 101, "numOfHosts": 41}
+  ],
+  "lm_device": [
+    {"id": 2001, "displayName": "lab-core-sw-01", "hostStatus": "normal"},
+    {"id": 2002, "displayName": "lab-edge-fw-01", "hostStatus": "normal"},
+    {"id": 2003, "displayName": "lab-branch-sw-07", "hostStatus": "dead"}
+  ],
+  "lm_alert": [
+    {"id": "LMD1001", "severity": 4, "monitorObjectName": "lab-branch-sw-07", "cleared": false},
+    {"id": "LMD1002", "severity": 2, "monitorObjectName": "lab-edge-fw-01", "cleared": false}
+  ],
+  "lm_dashboard": [
+    {"id": 31, "name": "Synthetic POV overview", "groupId": 1}
+  ]
 }

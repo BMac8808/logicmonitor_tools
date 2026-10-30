@@ -5,10 +5,11 @@ from __future__ import annotations
 from collections.abc import Iterator
 from pathlib import Path
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, inspect
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from sqlalchemy.pool import StaticPool
+from sqlalchemy.schema import CreateColumn
 
 
 class Base(DeclarativeBase):
@@ -40,6 +41,20 @@ def init_db(engine: Engine) -> None:
     from . import models  # noqa: F401  (register tables)
 
     Base.metadata.create_all(engine)
+    _add_missing_nullable_columns(engine)
+
+
+def _add_missing_nullable_columns(engine: Engine) -> None:
+    """Additive upgrade for local databases created by an older version: add new nullable
+    columns. Anything more involved needs real migrations (planned: Alembic)."""
+    insp = inspect(engine)
+    with engine.begin() as conn:
+        for table in Base.metadata.sorted_tables:
+            existing = {c["name"] for c in insp.get_columns(table.name)}
+            for column in table.columns:
+                if column.name not in existing and column.nullable:
+                    ddl = CreateColumn(column).compile(dialect=engine.dialect)
+                    conn.exec_driver_sql(f'ALTER TABLE "{table.name}" ADD COLUMN {ddl}')
 
 
 def session_factory(engine: Engine) -> sessionmaker[Session]:

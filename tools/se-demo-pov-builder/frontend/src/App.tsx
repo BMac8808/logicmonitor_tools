@@ -33,8 +33,10 @@ export default function App() {
   const route = useRoute();
   const meta = useAsync(() => api.meta(), []);
   const library = useAsync(async () => {
-    const [personas, capabilities, discovery] = await Promise.all([api.personas(), api.capabilities(), api.discoveryLibrary()]);
-    return buildLibrary(personas, capabilities, discovery);
+    const [personas, capabilities, discovery, ecosystem] = await Promise.all([
+      api.personas(), api.capabilities(), api.discoveryLibrary(), api.ecosystem(),
+    ]);
+    return buildLibrary(personas, capabilities, discovery, ecosystem);
   }, []);
 
   const needsToken = library.error?.includes("API token");

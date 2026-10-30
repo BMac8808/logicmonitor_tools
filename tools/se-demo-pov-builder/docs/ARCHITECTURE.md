@@ -51,7 +51,7 @@ tools/se-demo-pov-builder/
 │   │   ├── knowledge.py        Content models, loader, cross-reference validation
 │   │   ├── services/           Discovery coach, demo builder, POV builder,
 │   │   │                       workflow engine, markdown export
-│   │   ├── adapters/           base.py contracts + mock adapters
+│   │   ├── adapters/           base.py contracts, MCP client, lm_mcp adapter
 │   │   ├── llm/                Provider abstraction (none / Ollama / OpenAI-compatible)
 │   │   ├── api/                FastAPI routers
 │   │   ├── seed.py             Synthetic sample engagement
@@ -59,9 +59,10 @@ tools/se-demo-pov-builder/
 │   └── tests/
 ├── frontend/                   Vite + React + TypeScript, vitest
 ├── personas/                   One YAML file per persona
-├── knowledge/                  capabilities, discovery questions, demo scenarios, POV template
+├── knowledge/                  capabilities, discovery questions, demo scenarios, POV template,
+│                               lm_ecosystem.yaml (public LM tooling, POV toolkit)
 ├── workflows/                  One YAML file per workflow
-├── adapters/mock_responses/    JSON fixtures returned by mock adapters
+├── adapters/mock_responses/    MCP-format fixtures for mock mode
 ├── docs/                       This file, implementation plan, acceptance criteria
 ├── Dockerfile, docker-compose.yml, Makefile, .env.example
 └── data/                       SQLite database (git-ignored)
@@ -136,31 +137,31 @@ deal data.
 - Markdown export of the plan and a success summary. Simulated evidence is listed under a
   separate heading and never counted.
 
-## Integration adapters (`adapters/`)
+## LogicMonitor integration: reuse public tooling
 
-```python
-class ActionKind(Enum): READ_ONLY, STATE_CHANGING
+The app is the **planning front end**. It never calls the LogicMonitor REST API directly.
+Portal work reuses public community projects, pinned in `knowledge/lm_ecosystem.yaml`:
 
-@dataclass
-class ActionSpec: name, kind, description, params
-
-@dataclass
-class Authorization: approved_by, reason, scope (action names), expires_at
-
-class Adapter(ABC):
-    id, name, mode ("mock" | "live"), verified (bool)
-    def actions() -> list[ActionSpec]
-    def execute(action, params, authorization=None) -> AdapterResult
+```
+             plan (this app)                          portal (customer's LogicMonitor)
+┌───────────────────────────────────┐
+│ POV plan ──▶ readiness check ─────┼── MCP HTTP ──▶ logicmonitor-api-mcp ──▶ LM API (read)
+│          └─▶ setup script (.ps1) ─┼── person reviews & runs ──▶ Logic.Monitor ──▶ LM API (write)
+│                │                  │        downloads pinned files from LogicMonitor-Dashboards
+│ deal ──▶ handoff JSON ────────────┼──▶ POV tracker (e.g. LMDA)
+└───────────────────────────────────┘
 ```
 
-- `execute` raises `AuthorizationRequired` for state-changing actions without a valid
-  authorization covering that action, **in mock mode too**, so the contract is tested.
-- Every `AdapterResult` carries `simulated: bool`; mock results are always `True`.
-- MVP adapters: LogicMonitor REST API, LogicMonitor PowerShell module, LogicModule
-  utilities, LogicMonitor MCP integration. All are **mock only**. Action names are
-  abstract (`list_resources`, `get_alert_summary`, ...) and deliberately not mapped to
-  endpoint paths or cmdlet names until verified against official documentation.
-- `base.py` imports only the standard library so it can move to `shared/` later.
+| Concern | Where | Notes |
+|---------|-------|-------|
+| Read portal state | `adapters/lm_mcp.py`, `adapters/mcp_client.py` | Minimal MCP Streamable HTTP client (initialize → tools/call, JSON or SSE replies, session header). Parses the server's result format: JSON payload for small lists, Markdown table for larger ones. **List operations only.** Mock mode returns fixtures in the same format. |
+| Readiness checks | `services/pov_readiness.py` | Collectors (total/down), POV resource group (exists, resource count), critical alerts. Each check records the tool calls made. Results carry `simulated`. |
+| Portal changes | `services/powershell_script.py` | Generates a Logic.Monitor script: dry run unless `-Apply`; credentials only from env vars or a cached credential; idempotent group creation; toolkit modules downloaded from pinned raw URLs, skipped if a module with the same name exists; PropertySources and credentialed suites are listed as manual steps. All interpolated text is emitted as escaped single-quoted literals. |
+| Handoff | `services/handoff.py` | Pydantic models → JSON + JSON Schema; see `HANDOFF_FORMAT.md`. |
+| Adapter contracts | `adapters/base.py` | Unchanged and standard-library only: actions are `read_only` or `state_changing`; state-changing actions require an `Authorization`. The MCP adapter declares read-only actions only. |
+
+Private or internal repositories (for example LMDA) inform the design but are **reference
+only**. No code from them is copied into this public repository.
 
 ## Optional LLM (`llm/`)
 
@@ -192,6 +193,8 @@ All routes are under `/api`. Interactive docs: `http://127.0.0.1:8000/docs`.
 | POV | `GET/POST /deals/{id}/pov-plans`, `GET/PATCH /pov-plans/{id}`, `GET /pov-plans/{id}/export`, `GET/POST /deals/{id}/success-criteria`, `PATCH/DELETE /success-criteria/{id}`, `POST /success-criteria/{id}/evidence`, `DELETE /evidence/{id}` |
 | Workflows / tasks | `GET/POST /deals/{id}/workflows`, `DELETE /workflow-runs/{id}`, `GET/POST /deals/{id}/tasks`, `PATCH/DELETE /tasks/{id}` |
 | Adapters | `GET /adapters`, `POST /adapters/{id}/actions/{action}` |
+| LogicMonitor work | `POST /pov-plans/{id}/readiness`, `POST /pov-plans/{id}/setup-script`, `GET /library/ecosystem` |
+| Handoff | `GET /deals/{id}/handoff`, `GET /handoff/schema` |
 | LLM | `GET /llm/status`, `POST /deals/{id}/llm/discovery-summary` |
 
 ## Security posture
@@ -201,13 +204,15 @@ All routes are under `/api`. Interactive docs: `http://127.0.0.1:8000/docs`.
 | Network binding | `127.0.0.1` (also in Docker Compose port mapping) |
 | Authentication | None (single local user). Optional static bearer token via `SEPB_API_TOKEN`. |
 | CORS | Only the local Vite dev origins |
-| Outbound calls | None, unless an LLM provider is configured |
-| Live adapter writes | Not implemented; adapter mode `live` is rejected at start-up |
+| Outbound calls | None, unless an LLM provider or `SEPB_ADAPTER_MODE=mcp` is configured |
+| LogicMonitor credentials | Never stored or sent by this app; held by the MCP server / the user's PowerShell session |
+| Portal writes | Never made by this app; generated scripts are dry-run by default and run by a person |
 | Logging | Method, path, status and timing only; request bodies are never logged |
 | Secrets | Environment variables only; `.env` is git-ignored |
 
 ## Persistence
 
 SQLite via SQLAlchemy 2.x. Tables are created with `metadata.create_all` at start-up.
-Schema migrations (Alembic) are a planned milestone; until then, delete `data/sepb.db` after
-pulling schema changes (the sample engagement can be reloaded with one click).
+New nullable columns are added to existing databases at start-up. Full schema migrations
+(Alembic) are a planned milestone; for other schema changes delete `data/sepb.db` (the
+sample engagement can be reloaded with one click).

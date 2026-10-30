@@ -6,6 +6,7 @@
 | `discovery_questions.yaml` | Context tags, qualification checklist and the deterministic question library. |
 | `demo_scenarios.yaml` | Demo scenarios the demo builder chooses from. |
 | `pov_template.yaml` | POV milestones, owners, offsets and dependencies. |
+| `lm_ecosystem.yaml` | Public LogicMonitor community projects this app reuses (pinned commits, licences), the POV toolkit LogicModules the setup script can import, and reference links by capability. |
 
 All files are validated together (ids must be unique, references must resolve). Run
 `make validate-content` from the tool directory after any change.

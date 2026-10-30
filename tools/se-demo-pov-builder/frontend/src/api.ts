@@ -1,8 +1,8 @@
 // Thin typed client for the backend API. All requests go to the same origin (/api).
 import type {
   Account, Adapter, AdapterResult, Answer, CapabilityCatalog, CapabilityMatch, Criterion, Deal, DealDetail,
-  DealListItem, DemoPlan, DemoPlanSummary, DemoScenario, DiscoveryLibrary, DiscoveryQuestions, Evidence, Gaps,
-  Meta, Persona, PovPlan, PovPlanSummary, Requirement, Stakeholder, Task, WorkflowDefinition, WorkflowRun,
+  DealListItem, DemoPlan, DemoPlanSummary, DemoScenario, DiscoveryLibrary, DiscoveryQuestions, Ecosystem, Evidence,
+  Gaps, Meta, ReadinessResult, Persona, PovPlan, PovPlanSummary, Requirement, Stakeholder, Task, WorkflowDefinition, WorkflowRun,
 } from "./types";
 
 const TOKEN_KEY = "sepb_api_token";
@@ -75,6 +75,7 @@ export const api = {
   scenarios: () => get<DemoScenario[]>("/library/demo-scenarios"),
   workflows: () => get<WorkflowDefinition[]>("/library/workflows"),
   reloadContent: () => post<Record<string, number>>("/library/reload"),
+  ecosystem: () => get<Ecosystem>("/library/ecosystem"),
 
   accounts: () => get<Account[]>("/accounts"),
   createAccount: (body: Partial<Account>) => post<Account>("/accounts", body),
@@ -113,6 +114,10 @@ export const api = {
     post<PovPlan>(`/deals/${dealId}/pov-plans`, body),
   updatePovPlan: (id: number, body: Partial<PovPlanSummary>) => patch<PovPlan>(`/pov-plans/${id}`, body),
   exportPovPlan: (id: number) => get<string>(`/pov-plans/${id}/export`),
+  povReadiness: (id: number) => post<ReadinessResult>(`/pov-plans/${id}/readiness`),
+  povSetupScript: (id: number, body: { toolkit_ids: string[]; include_subgroups: boolean }) =>
+    post<string>(`/pov-plans/${id}/setup-script`, body),
+  handoff: (dealId: number) => get<unknown>(`/deals/${dealId}/handoff`),
 
   criteria: (dealId: number) => get<Criterion[]>(`/deals/${dealId}/success-criteria`),
   createCriterion: (dealId: number, body: Partial<Criterion>) => post<Criterion>(`/deals/${dealId}/success-criteria`, body),

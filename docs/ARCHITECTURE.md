@@ -45,11 +45,20 @@ Extraction checklist:
 
 ## Integration principles (all tools)
 
+- **Reuse public LogicMonitor tooling first.** Reads go through the public
+  logicmonitor-api-mcp server or the Logic.Monitor PowerShell module; tools in this
+  repository do not ship their own LogicMonitor API clients unless neither covers the need.
+- **Plan here, change there.** Portal changes are emitted as reviewable artifacts
+  (dry-run-by-default scripts) that a person runs, not executed by a web app.
+- **Credentials stay with the tool that uses them** (MCP server, PowerShell session), never
+  in these apps.
+
 - Interfaces separate **read-only** from **state-changing** operations.
 - State-changing operations require an explicit authorization object and are disabled
   by default.
-- Real endpoints, cmdlets and schemas are implemented only after they are checked
-  against official documentation; until then adapters are mocks and say so.
+- Tool names, cmdlets, endpoints and schemas are used only after checking them against
+  official documentation or the reused project's source at a pinned commit. Mock modes
+  say so in every result.
 - No tool depends on a paid cloud service or a specific AI vendor at runtime. Optional
   AI features use self-hostable or OpenAI-compatible endpoints and are off by default.
 

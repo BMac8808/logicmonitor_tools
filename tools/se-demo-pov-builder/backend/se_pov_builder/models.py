@@ -126,6 +126,8 @@ class PovPlan(TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(20), default="draft")
     template_version: Mapped[int] = mapped_column(Integer, default=1)
     summary_notes: Mapped[str] = mapped_column(Text, default="")
+    # Resource group name the POV uses in the customer's portal (setup script + readiness check).
+    portal_group: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
 
 class SuccessCriterion(TimestampMixin, Base):

@@ -5,18 +5,20 @@
 #   - `contexts` contains `any` or one of the deal's technical context tags.
 # `qualification_key` links a question to an item in `qualification_checklist`; the
 # discovery coach reports checklist items that have no answered question as gaps.
+# `portal_group` (optional) names the resource subgroup the POV setup script creates
+# for that technology.
 # `suggests_capabilities` lists capability ids worth considering when the answer reveals
 # a need. It is a hint for the SE, not a claim about the customer.
 version: 1
 context_tags:
-  - {id: network, label: "Network (LAN/WAN, firewalls, wireless)"}
-  - {id: servers_virtualization, label: "Servers & virtualisation"}
-  - {id: storage, label: "Storage"}
-  - {id: cloud_aws, label: "AWS"}
-  - {id: cloud_azure, label: "Microsoft Azure"}
-  - {id: cloud_gcp, label: "Google Cloud"}
-  - {id: kubernetes, label: "Kubernetes / containers"}
-  - {id: applications, label: "Business applications & websites"}
+  - {id: network, label: "Network (LAN/WAN, firewalls, wireless)", portal_group: Network}
+  - {id: servers_virtualization, label: "Servers & virtualisation", portal_group: Servers and Virtualization}
+  - {id: storage, label: "Storage", portal_group: Storage}
+  - {id: cloud_aws, label: "AWS", portal_group: AWS}
+  - {id: cloud_azure, label: "Microsoft Azure", portal_group: Azure}
+  - {id: cloud_gcp, label: "Google Cloud", portal_group: GCP}
+  - {id: kubernetes, label: "Kubernetes / containers", portal_group: Kubernetes}
+  - {id: applications, label: "Business applications & websites", portal_group: Applications and Websites}
   - {id: logs, label: "Logs & events"}
   - {id: itsm, label: "ITSM / incident tooling"}
   - {id: multi_site, label: "Branch / multi-site"}

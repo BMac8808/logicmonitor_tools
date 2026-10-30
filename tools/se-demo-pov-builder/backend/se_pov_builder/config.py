@@ -1,6 +1,6 @@
 """Application settings, read from SEPB_* environment variables.
 
-Defaults are deliberately conservative: loopback binding, no LLM, mock adapters only.
+Defaults are deliberately conservative: loopback binding, no LLM, mock-mode MCP adapter (no portal access).
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ from pathlib import Path
 TOOL_ROOT = Path(__file__).resolve().parents[2]
 
 LLM_PROVIDERS = ("none", "ollama", "openai_compatible")
+ADAPTER_MODES = ("mock", "mcp")
 
 
 def _env(name: str, default: str = "") -> str:
@@ -35,6 +36,9 @@ class Settings:
     cors_origins: list[str] = field(default_factory=list)
     allow_sample_data: bool = True
     adapter_mode: str = "mock"
+    mcp_url: str = "http://127.0.0.1:3000/mcp"
+    mcp_token: str = ""
+    mcp_timeout_seconds: float = 30.0
     frontend_dist: Path | None = None
     log_level: str = "INFO"
     llm_provider: str = "none"
@@ -57,6 +61,9 @@ class Settings:
             cors_origins=[o.strip() for o in origins.split(",") if o.strip()],
             allow_sample_data=_env_bool("ALLOW_SAMPLE_DATA", True),
             adapter_mode=_env("ADAPTER_MODE", "mock").lower(),
+            mcp_url=_env("MCP_URL", "http://127.0.0.1:3000/mcp"),
+            mcp_token=_env("MCP_TOKEN"),
+            mcp_timeout_seconds=float(_env("MCP_TIMEOUT_SECONDS", "30")),
             frontend_dist=Path(dist) if dist else None,
             log_level=_env("LOG_LEVEL", "INFO").upper(),
             llm_provider=_env("LLM_PROVIDER", "none").lower(),
@@ -69,11 +76,13 @@ class Settings:
         return settings
 
     def validate(self) -> None:
-        if self.adapter_mode != "mock":
+        if self.adapter_mode not in ADAPTER_MODES:
             raise ValueError(
-                "SEPB_ADAPTER_MODE must be 'mock'. Live adapters are not implemented; they "
-                "will be added only after verification against official documentation."
+                f"SEPB_ADAPTER_MODE must be one of {', '.join(ADAPTER_MODES)}. 'mcp' reads from a "
+                "logicmonitor-api-mcp server you run yourself; this app never calls the LogicMonitor API directly."
             )
+        if self.adapter_mode == "mcp" and not self.mcp_url.startswith(("http://", "https://")):
+            raise ValueError("SEPB_MCP_URL must be an http(s) URL, e.g. http://127.0.0.1:3000/mcp")
         if self.llm_provider not in LLM_PROVIDERS:
             raise ValueError(f"SEPB_LLM_PROVIDER must be one of {', '.join(LLM_PROVIDERS)}")
         if self.llm_provider != "none" and not (self.llm_base_url and self.llm_model):

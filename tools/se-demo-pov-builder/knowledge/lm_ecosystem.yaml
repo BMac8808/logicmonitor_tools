@@ -1,0 +1,220 @@
+# Public LogicMonitor community tooling this app reuses for anything that touches a
+# LogicMonitor portal. This app plans the engagement; these projects do the portal work.
+#
+# Rules:
+#   - Only PUBLIC repositories are listed. Private/internal projects may inform the design
+#     but their code is never copied here.
+#   - Files are referenced, never vendored. Generated scripts download them at run time
+#     from the pinned commit, so their own licences apply.
+#   - Pin `commit` to a SHA you have reviewed. Bump it deliberately.
+version: 1
+
+projects:
+  - id: lm_powershell_module
+    name: Logic.Monitor PowerShell module
+    repo: logicmonitor/lm-powershell-module
+    commit: 7742672a1c7354e9b1b65aef8d053a0094235254
+    license: MPL-2.0
+    install: "Install-Module -Name Logic.Monitor -Scope CurrentUser"
+    docs: https://logicmonitor.github.io/lm-powershell-module-docs/
+    used_for: Generated POV setup scripts (resource groups, LogicModule imports, read-only checks).
+  - id: logicmonitor_api_mcp
+    name: LogicMonitor API MCP server
+    repo: logicmonitor/logicmonitor-api-mcp
+    commit: 49cb7071aef19f3c5c8d3040c0a1bfea4d52aff2
+    license: MPL-2.0
+    install: "ENABLE_HTTP=true LM_ACCOUNT=<portal> LM_BEARER_TOKEN=<token> npx logicmonitor-api-mcp@2"
+    docs: https://github.com/logicmonitor/logicmonitor-api-mcp#readme
+    used_for: Read-only POV readiness checks (collectors, resource groups, alerts) over MCP HTTP.
+  - id: logicmonitor_dashboards
+    name: LogicMonitor-Dashboards (community dashboards and LogicModules)
+    repo: stevevillardi/LogicMonitor-Dashboards
+    commit: af0b95f0e6cb17ffd39c48803c4020302e27e6d1
+    license: MPL-2.0
+    docs: https://github.com/stevevillardi/LogicMonitor-Dashboards
+    used_for: POV toolkit LogicModules and the Alert Duration dashboard suite.
+  - id: monitoring_recipes
+    name: Monitoring Recipes
+    repo: logicmonitor/monitoring-recipes
+    commit: a7b45b6776d791cfdc67d9144fb4a1ef42e7b70b
+    license: Apache-2.0
+    docs: https://github.com/logicmonitor/monitoring-recipes
+    used_for: Script building blocks and module-type guidance for custom monitoring requirements.
+  - id: lmda_composer
+    name: LMDA Composer for VS Code
+    repo: stevevillardi/lmda-composer-vscode-docs
+    commit: 25d406d597512b2125b39da778404a576fb19abc
+    license: unspecified (documentation only; extension published on the VS Code Marketplace)
+    docs: https://stevevillardi.github.io/lmda-composer-vscode-docs/
+    used_for: Developing and debugging LogicModule scripts when a requirement needs custom monitoring.
+
+# LogicModules / dashboards that help run a POV. `import`:
+#   powershell - the generated setup script imports it (Import-LMLogicModuleFromFile),
+#                skipping it when a module with `module_name` already exists
+#   manual     - needs setup the script cannot do safely (credentials on a resource,
+#                PropertySource import, changes to collectors); the script prints the steps
+toolkit:
+  - id: nodata_tasks_overall
+    title: NoData tasks overall
+    project: logicmonitor_dashboards
+    path: POV/NoData_Tasks_Overall_v2.xml
+    module_name: NoData_Tasks_Overall_v2
+    kind: datasource
+    format: xml
+    import: powershell
+    purpose: Counts collection tasks per collector, including tasks returning some or no data, to measure data completeness.
+    milestones: [coverage_validation]
+  - id: nodata_metrics
+    title: NoData metrics
+    project: logicmonitor_dashboards
+    path: POV/NoData_Metrics.xml
+    module_name: NoData_Metrics
+    kind: datasource
+    format: xml
+    import: powershell
+    purpose: Counts datapoints returning NaN versus numeric values, to spot gaps in collected data.
+    milestones: [coverage_validation]
+  - id: nodata_tasks_discovery
+    title: NoData task-type discovery
+    project: logicmonitor_dashboards
+    path: POV/NoData_Tasks_Discovery_v2.json
+    kind: propertysource
+    format: json
+    import: manual
+    purpose: Lists task types per resource as an auto property; required by "NoData tasks by type".
+    milestones: [coverage_validation]
+    manual_steps: Import as a PropertySource from the LogicModules page (the script does not import PropertySources).
+  - id: nodata_tasks_by_type
+    title: NoData tasks by collection type
+    project: logicmonitor_dashboards
+    path: POV/NoData_Tasks_By_Type_v2.xml
+    module_name: NoData_Tasks_By_Type_v2
+    kind: datasource
+    format: xml
+    import: powershell
+    purpose: Task counts per collection method with no-data breakdown.
+    milestones: [coverage_validation]
+    requires: [nodata_tasks_discovery]
+  - id: collector_configurations
+    title: Collector configurations
+    project: logicmonitor_dashboards
+    path: POV/LogicMonitor_Collector_Configurations.xml
+    module_name: LogicMonitor_Collector_Configurations
+    kind: datasource
+    format: xml
+    import: powershell
+    purpose: Reports collector configuration settings for collectors in the POV.
+    milestones: [environment_setup, coverage_validation]
+  - id: collector_health
+    title: Collector health (aggregate)
+    project: logicmonitor_dashboards
+    path: POV/LogicMonitor_Collector_Health.xml
+    module_name: LogicMonitor Collector Health
+    kind: datasource
+    format: xml
+    import: powershell
+    purpose: Aggregate collector health view.
+    milestones: [environment_setup, coverage_validation]
+    manual_steps: 'Applies to a resource displayed as "LogicMonitor: Collector Health"; create that resource after import.'
+  - id: windows_events_logsource
+    title: Windows events LogSource
+    project: logicmonitor_dashboards
+    path: POV/Windows_Events.json
+    module_name: Windows_Events
+    kind: logsource
+    format: json
+    import: powershell
+    purpose: Ingests Windows event logs as logs, for log-analysis use cases.
+    milestones: [use_case_validation]
+    capabilities: [log_analysis]
+  - id: windows_services_ad
+    title: Windows services (Active Discovery)
+    project: logicmonitor_dashboards
+    path: POV/Microsoft_Windows_Services_AD.xml
+    module_name: Microsoft_Windows_Services_AD
+    kind: datasource
+    format: xml
+    import: powershell
+    purpose: Tracks state, start mode and exit codes of installed Windows services via WMI. Ships disabled (AppliesTo ends in false()); edit AppliesTo to enable.
+    milestones: [use_case_validation]
+    capabilities: [infrastructure_monitoring]
+  - id: ps_module_on_collectors
+    title: Install Logic.Monitor on Windows collectors
+    project: logicmonitor_dashboards
+    path: POV/addPSModule_Logic.Monitor.json
+    kind: propertysource
+    format: json
+    import: manual
+    purpose: Checks Windows collectors for the Logic.Monitor module and installs it if missing. Changes collector hosts; agree with the customer first.
+    milestones: [environment_setup]
+    capabilities: [api_automation]
+    manual_steps: Import as a PropertySource only with the customer's approval, since it installs software on collectors.
+  - id: alert_duration_suite
+    title: Alert Duration analysis suite
+    project: logicmonitor_dashboards
+    path: Suites/Alert Duration/readme.md
+    kind: suite
+    format: md
+    import: manual
+    purpose: DataSources and dashboards that track alert duration and response (MTTA/MTTR style) per portal, group and resource.
+    milestones: [results_readout]
+    capabilities: [alerting_escalation, dashboards_reporting]
+    manual_steps: Requires API credentials as properties on a portal-metrics resource; follow the suite readme. Never put customer credentials in this app.
+
+# Reference material linked from requirements, by capability.
+references:
+  - id: choosing_module_type
+    title: Choosing a module type
+    project: monitoring_recipes
+    path: docs/choosing-a-module-type.md
+    capabilities: [custom_monitoring]
+  - id: module_authoring_getting_started
+    title: Module authoring getting started
+    project: monitoring_recipes
+    path: docs/getting-started.md
+    capabilities: [custom_monitoring]
+  - id: groovy_recipes
+    title: Groovy recipes (HTTP/REST, JDBC, SNMP, SSH)
+    project: monitoring_recipes
+    path: recipes/groovy
+    capabilities: [custom_monitoring]
+  - id: powershell_recipes
+    title: PowerShell recipes (WMI, WinRM)
+    project: monitoring_recipes
+    path: recipes/powershell
+    capabilities: [custom_monitoring, infrastructure_monitoring]
+  - id: logsource_guide
+    title: LogSource module guide
+    project: monitoring_recipes
+    path: docs/module-types/logsource.md
+    capabilities: [log_analysis]
+  - id: configsource_guide
+    title: ConfigSource module guide
+    project: monitoring_recipes
+    path: docs/module-types/configsource.md
+    capabilities: [config_change_tracking]
+  - id: topologysource_guide
+    title: TopologySource module guide
+    project: monitoring_recipes
+    path: docs/module-types/topologysource.md
+    capabilities: [topology_mapping]
+  - id: dashboard_authoring_skill
+    title: Dashboard authoring skill (JSON schema and validation)
+    project: monitoring_recipes
+    path: skills/logicmonitor-dashboard-authoring
+    capabilities: [dashboards_reporting]
+  - id: composer_docs
+    title: LMDA Composer — develop and debug module scripts in VS Code
+    project: lmda_composer
+    url: https://stevevillardi.github.io/lmda-composer-vscode-docs/
+    capabilities: [custom_monitoring]
+  - id: powershell_module_docs
+    title: Logic.Monitor PowerShell module documentation
+    project: lm_powershell_module
+    url: https://logicmonitor.github.io/lm-powershell-module-docs/
+    capabilities: [api_automation]
+  - id: mcp_server_readme
+    title: LogicMonitor API MCP server
+    project: logicmonitor_api_mcp
+    path: README.md
+    capabilities: [api_automation]

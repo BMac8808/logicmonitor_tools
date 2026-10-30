@@ -258,6 +258,7 @@ class PovPlanIn(BaseModel):
     start_date: date
     duration_days: int | None = Field(default=None, ge=1, le=180)
     draft_criteria_from_requirements: bool = True
+    portal_group: str | None = Field(default=None, min_length=1, max_length=200)
 
 
 class PovPlanPatch(BaseModel):
@@ -267,6 +268,7 @@ class PovPlanPatch(BaseModel):
     end_date: date | None = None
     status: PovStatus | None = None
     summary_notes: str | None = None
+    portal_group: str | None = Field(default=None, min_length=1, max_length=200)
 
 
 class EvidenceIn(BaseModel):
@@ -358,6 +360,7 @@ class PovPlanOut(ORM):
     status: str
     template_version: int
     summary_notes: str
+    portal_group: str | None
     created_at: datetime
 
 
@@ -421,6 +424,11 @@ class AuthorizationIn(BaseModel):
 class AdapterActionIn(BaseModel):
     params: dict[str, Any] = {}
     authorization: AuthorizationIn | None = None
+
+
+class SetupScriptIn(BaseModel):
+    toolkit_ids: list[str] = []
+    include_subgroups: bool = True
 
 
 class LLMDraftOut(BaseModel):

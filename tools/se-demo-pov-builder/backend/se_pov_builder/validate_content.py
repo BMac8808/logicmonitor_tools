@@ -21,7 +21,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print(f"Content in {content_dir} is valid: {len(kb.personas)} personas, {len(kb.capabilities)} capabilities, "
           f"{len(kb.questions)} questions, {len(kb.scenarios)} demo scenarios, {len(kb.workflows)} workflows, "
-          f"{len(kb.pov_template.milestones)} POV milestones.")
+          f"{len(kb.pov_template.milestones)} POV milestones, {len(kb.toolkit)} toolkit items.")
     return 0
 
 

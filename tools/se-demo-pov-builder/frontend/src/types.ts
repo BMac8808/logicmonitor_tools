@@ -11,7 +11,8 @@ export interface Meta {
   name: string;
   version: string;
   disclaimer: string;
-  adapter_mode: string;
+  adapter_mode: "mock" | "mcp";
+  mcp_url: string;
   llm_provider: string;
   llm_enabled: boolean;
   auth_required: boolean;
@@ -298,6 +299,7 @@ export interface PovPlanSummary {
   end_date: string | null;
   status: "draft" | "active" | "completed" | "closed";
   summary_notes: string;
+  portal_group: string | null;
 }
 
 export interface PovPlan extends PovPlanSummary {
@@ -383,4 +385,59 @@ export interface AdapterResult {
   simulated: boolean;
   data: unknown;
   message: string;
+}
+
+export interface EcosystemProject {
+  id: string;
+  name: string;
+  repo: string;
+  commit: string;
+  license: string;
+  install: string;
+  docs: string;
+  used_for: string;
+}
+
+interface EcosystemItemBase {
+  id: string;
+  title: string;
+  project: string;
+  project_name: string;
+  license: string;
+  source_url: string;
+  capabilities: string[];
+}
+
+export interface ToolkitItem extends EcosystemItemBase {
+  kind: "datasource" | "logsource" | "propertysource" | "suite";
+  import: "powershell" | "manual";
+  purpose: string;
+  milestones: string[];
+  requires: string[];
+  manual_steps: string;
+}
+
+export type EcosystemReference = EcosystemItemBase;
+
+export interface Ecosystem {
+  projects: EcosystemProject[];
+  toolkit: ToolkitItem[];
+  references: EcosystemReference[];
+}
+
+export interface ReadinessCheck {
+  id: string;
+  title: string;
+  status: "ok" | "warn" | "fail" | "error";
+  detail: string;
+  calls: { tool: string; arguments: Record<string, unknown>; total: number | null }[];
+}
+
+export interface ReadinessResult {
+  group_name: string;
+  adapter_mode: string;
+  simulated: boolean;
+  source: string;
+  checked_at: string;
+  checks: ReadinessCheck[];
 }

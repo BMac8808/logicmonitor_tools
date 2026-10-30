@@ -10,12 +10,18 @@ services:
       SEPB_LLM_MODEL: ${SEPB_LLM_MODEL:-}
       SEPB_LLM_API_KEY: ${SEPB_LLM_API_KEY:-}
       SEPB_API_TOKEN: ${SEPB_API_TOKEN:-}
+      SEPB_ADAPTER_MODE: ${SEPB_ADAPTER_MODE:-mock}
+      # From inside the container, reach an MCP server on the host via host.docker.internal.
+      SEPB_MCP_URL: ${SEPB_MCP_URL:-http://host.docker.internal:3000/mcp}
+      SEPB_MCP_TOKEN: ${SEPB_MCP_TOKEN:-}
     volumes:
       - sepb-data:/app/data
       # Uncomment to edit content without rebuilding (then use Library -> Reload content):
       # - ./personas:/app/personas:ro
       # - ./knowledge:/app/knowledge:ro
       # - ./workflows:/app/workflows:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
 volumes:

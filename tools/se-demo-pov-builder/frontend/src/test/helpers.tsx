@@ -40,6 +40,11 @@ export const testLibrary = buildLibrary(
     capabilities: [{ id: "alerting_escalation", name: "Alerting and escalation", category: "Ops", description: "", keywords: ["alert"], verified: false }],
   },
   { context_tags: [{ id: "network", label: "Network" }], qualification_checklist: [] },
+  {
+    projects: [{ id: "lm_powershell_module", name: "Logic.Monitor PowerShell module", repo: "logicmonitor/lm-powershell-module", commit: "7742672a1c7354e9b1b65aef8d053a0094235254", license: "MPL-2.0", install: "Install-Module -Name Logic.Monitor -Scope CurrentUser", docs: "https://example.invalid/docs", used_for: "" }],
+    toolkit: [{ id: "nodata_metrics", title: "NoData metrics", project: "logicmonitor_dashboards", project_name: "LogicMonitor-Dashboards", license: "MPL-2.0", source_url: "https://github.com/x/y", capabilities: [], kind: "datasource", import: "powershell", purpose: "Counts NaN datapoints", milestones: ["coverage_validation"], requires: [], manual_steps: "" }],
+    references: [],
+  },
 );
 
 export function WithLibrary({ children }: { children: ReactNode }) {

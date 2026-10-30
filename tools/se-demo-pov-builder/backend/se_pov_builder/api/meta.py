@@ -13,6 +13,7 @@ from ..models import Deal, DiscoveryAnswer, Requirement, Stakeholder
 from ..schemas import AdapterActionIn, CapabilityMatchIn, CapabilityMatchOut, LLMDraftOut
 from ..seed import SAMPLE_DEAL_NAME, seed_sample_engagement
 from ..services.discovery import match_capabilities
+from ..services.handoff import HandoffPackage
 from .deps import deal_or_404, get_db, get_kb
 
 router = APIRouter()
@@ -31,6 +32,7 @@ def meta(request: Request) -> dict:
         "version": __version__,
         "disclaimer": "Community tool. Not an official LogicMonitor product. Synthetic data only.",
         "adapter_mode": s.adapter_mode,
+        "mcp_url": s.mcp_url if s.adapter_mode == "mcp" else "",
         "llm_provider": s.llm_provider,
         "llm_enabled": request.app.state.llm.enabled,
         "auth_required": bool(s.api_token),
@@ -91,6 +93,29 @@ def workflows(kb: KnowledgeBase = Depends(get_kb)) -> list[dict]:
 @router.get("/library/pov-template")
 def pov_template(kb: KnowledgeBase = Depends(get_kb)) -> dict:
     return kb.pov_template.model_dump()
+
+
+@router.get("/library/ecosystem")
+def ecosystem(kb: KnowledgeBase = Depends(get_kb)) -> dict:
+    eco = kb.ecosystem
+
+    def item(i) -> dict:
+        data = i.model_dump(by_alias=True)
+        data["source_url"] = eco.source_url(i)
+        data["project_name"] = eco.project(i.project).name
+        data["license"] = eco.project(i.project).license
+        return data
+
+    return {
+        "projects": [p.model_dump() for p in eco.projects],
+        "toolkit": [item(t) for t in eco.toolkit],
+        "references": [item(r) for r in eco.references],
+    }
+
+
+@router.get("/handoff/schema")
+def handoff_schema() -> dict:
+    return HandoffPackage.model_json_schema()
 
 
 @router.post("/library/reload")

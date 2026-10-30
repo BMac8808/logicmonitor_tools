@@ -1,32 +1,53 @@
-# Adapters
+# Integrations
 
-Contracts and mock data for future integrations. **Every adapter in the MVP is a mock.**
+This app **plans** engagements. Anything that touches a LogicMonitor portal reuses public
+community tooling instead of a home-grown API client:
 
-| Adapter id | Purpose | Mode | Verified |
-|------------|---------|------|----------|
-| `lm_rest_api` | Platform REST API (resources, groups, alerts, collectors) | mock | no |
-| `lm_powershell` | Scripts using a community PowerShell module | mock | no |
-| `logicmodule_tools` | Review/edit LogicModule definitions | mock | no |
-| `lm_mcp` | Model Context Protocol bridge | mock | no |
+| Need | Tool reused | How |
+|------|-------------|-----|
+| Read portal state (collectors, groups, resources, alerts, dashboards) | [logicmonitor-api-mcp](https://github.com/logicmonitor/logicmonitor-api-mcp) (MPL-2.0) | `lm_mcp` adapter calls the server's tools over MCP Streamable HTTP, **list operations only** |
+| Change the portal (POV resource groups, LogicModule imports) | [Logic.Monitor PowerShell module](https://github.com/logicmonitor/lm-powershell-module) (MPL-2.0) | Generated `.ps1` script, reviewed and run by a person; dry run by default |
+| POV LogicModules (NoData, collector health, Windows events, ...) | [LogicMonitor-Dashboards](https://github.com/stevevillardi/LogicMonitor-Dashboards) (MPL-2.0) | Downloaded by the script at run time from a pinned commit |
+| Custom monitoring guidance | [monitoring-recipes](https://github.com/logicmonitor/monitoring-recipes) (Apache-2.0), LMDA Composer docs | Linked from requirements |
 
-- Code: `backend/se_pov_builder/adapters/` (`base.py` = contracts, `mock.py` = mocks).
-- Fixtures: `mock_responses/<adapter_id>.json`. All data is synthetic; field names are
-  illustrative, **not** the real API schema.
-- Action names are abstract (`list_resources`, ...) and are not mapped to endpoint paths
-  or cmdlets. That mapping is added only when a live adapter is built and checked against
-  official documentation.
+The catalogue, pinned commits and licences are in `knowledge/lm_ecosystem.yaml`.
 
-## Read-only vs state-changing
+## `lm_mcp` adapter
 
-Every action is declared `read_only` or `state_changing`. State-changing actions require
-an `Authorization` (approver, reason, scope `"<adapter>:<action>"`, expiry), even in mock
-mode, and mock adapters only return a dry-run description.
+- Code: `backend/se_pov_builder/adapters/` (`base.py` contracts, `mcp_client.py`
+  Streamable HTTP client and result parser, `lm_mcp.py` adapter).
+- Actions: `list_collectors`, `list_resource_groups`, `list_resources`, `list_alerts`,
+  `list_dashboards`, mapped to the server's `lm_collector`, `lm_device_group`, `lm_device`,
+  `lm_alert` and `lm_dashboard` tools with `operation: "list"`. They accept `filter`,
+  `size` and `fields`.
+- **Read-only.** The adapter declares no state-changing actions. The base contract still
+  requires an `Authorization` for state-changing actions, should a future adapter add any.
+- **No LogicMonitor credentials in this app.** The MCP server holds them (`LM_ACCOUNT`,
+  `LM_BEARER_TOKEN` in its environment). `SEPB_MCP_TOKEN` is only the MCP server's own
+  bearer token (its `AUTH_MODE=bearer`).
 
-## Adding a live adapter (future)
+### Modes
 
-1. Confirm endpoints, authentication, pagination and rate limits in official docs, and
-   link them in the pull request.
-2. Implement a new `Adapter` subclass with `mode = "live"`; start with read-only actions.
-3. Read credentials from environment variables only; never log them.
-4. Keep tests on mocks (`httpx.MockTransport`); never call a live portal in CI.
-5. Keep state-changing actions behind `Authorization` and an explicit opt-in setting.
+| `SEPB_ADAPTER_MODE` | Behaviour |
+|---------------------|-----------|
+| `mock` (default) | Synthetic fixtures (`mock_responses/lm_mcp.json`) returned in the server's real result format, with a small filter emulation. Every result is labelled simulated. |
+| `mcp` | Calls the server at `SEPB_MCP_URL` (default `http://127.0.0.1:3000/mcp`). |
+
+### Running the MCP server locally
+
+```bash
+ENABLE_HTTP=true LM_ACCOUNT=<portal> LM_BEARER_TOKEN=<token> npx logicmonitor-api-mcp@2
+```
+
+Then start this app with `SEPB_ADAPTER_MODE=mcp`. Use a least-privilege, read-only API
+user for the token. This app only issues list operations, but the server itself supports
+writes.
+
+## Adding an integration
+
+1. Prefer an existing public LogicMonitor community project over new API client code.
+2. Verify tool, cmdlet and endpoint names against the project's source at a pinned commit,
+   and record the commit in `knowledge/lm_ecosystem.yaml`.
+3. Keep reads in adapters. Put changes behind reviewed, dry-run-by-default artifacts
+   (scripts) or the `Authorization` contract.
+4. Test against fakes (`httpx.MockTransport`). Never call a live portal in CI.

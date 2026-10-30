@@ -55,17 +55,30 @@ Next Actions), then widen.
 - Frontend component tests with mocked API.
 - CI: ruff, pytest, tsc, vitest, vite build.
 
+## Phase 7 — Reuse public LogicMonitor tooling ✅
+
+- Replaced the invented mock adapters with a read-only adapter for the public
+  `logicmonitor-api-mcp` server (mock and live modes, protocol-faithful tests).
+- POV readiness checks with attach-as-evidence (simulated flag preserved).
+- Generated Logic.Monitor PowerShell setup scripts (dry run by default, pinned sources,
+  never overwrite existing modules, no credentials).
+- `knowledge/lm_ecosystem.yaml`: pinned public projects, POV toolkit, reference links.
+- Versioned handoff export for downstream SE platforms (LMDA).
+- Private repositories used as reference only.
+
 ## Next milestones (proposed, not started)
 
 1. **Migrations**: Alembic, so upgrades keep existing local data.
 2. **Exports**: DOCX/PDF for POV plans and success summaries.
-3. **Read-only REST adapter (live)**: implement 2–3 read operations after verifying
-   endpoints, authentication and rate limits against official documentation; keep mock as
-   default; record fixtures from a sandbox with synthetic data only.
-4. **Second tool** (e.g. inventory exporter) that reuses the adapter contracts; at that
+3. **Validate against a sandbox portal**: run the MCP readiness checks and a generated
+   setup script (dry run, then `-Apply`) against a sandbox with synthetic resources; add
+   PSScriptAnalyzer and Pester to CI for generated scripts.
+4. **LMDA import**: an importer on the LMDA side for `se-demo-pov-builder/handoff` v1
+   (lives in LMDA's repository, not here).
+5. **Second tool** (e.g. inventory exporter) that reuses the adapter contracts; at that
    point move `adapters/base.py` into `shared/python/`.
-5. **Multi-user**: authentication, per-user ownership, audit log of state changes.
-6. **Content packs**: load additional persona/scenario directories (team-specific) via
+6. **Multi-user**: authentication, per-user ownership, audit log of state changes.
+7. **Content packs**: load additional persona/scenario directories (team-specific) via
    `SEPB_EXTRA_CONTENT_DIRS`.
-7. **Optional AI assists**: talking-point refinement and objection-handling drafts, always
+8. **Optional AI assists**: talking-point refinement and objection-handling drafts, always
    labelled and never auto-saved.

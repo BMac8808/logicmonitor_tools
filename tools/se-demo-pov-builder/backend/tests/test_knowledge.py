@@ -87,3 +87,28 @@ def test_validate_cli(content_copy, capsys):
     (content_copy / "personas" / "bad.yaml").write_text("id: [not, a, string]\n")
     assert validate_main([str(content_copy)]) == 1
     assert "INVALID" in capsys.readouterr().out
+
+
+def test_ecosystem_references_are_validated(content_copy):
+    path = content_copy / "knowledge" / "lm_ecosystem.yaml"
+    data = yaml.safe_load(path.read_text())
+    data["toolkit"][0]["milestones"] = ["no_such_milestone"]
+    data["toolkit"][1]["project"] = "no_such_project"
+    data["toolkit"][2]["requires"] = ["no_such_item"]
+    data["references"][0]["capabilities"] = ["no_such_capability"]
+    scripted = next(t for t in data["toolkit"] if t["import"] == "powershell")
+    scripted["module_name"] = ""
+    path.write_text(yaml.safe_dump(data))
+    with pytest.raises(ContentError) as err:
+        KnowledgeBase.load(content_copy)
+    text = "\n".join(err.value.problems)
+    for expected in ("no_such_milestone", "no_such_project", "no_such_item", "no_such_capability", "module_name"):
+        assert expected in text
+
+
+def test_ecosystem_projects_are_pinned(kb):
+    assert all(len(p.commit) == 40 for p in kb.ecosystem.projects)
+    assert all(p.license for p in kb.ecosystem.projects)
+    url = kb.ecosystem.raw_url(kb.toolkit["nodata_metrics"])
+    assert url.startswith("https://raw.githubusercontent.com/")
+    assert kb.ecosystem.project("logicmonitor_dashboards").commit in url

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import re
 
-from fastapi import APIRouter, Depends, HTTPException, Response
-from fastapi.responses import PlainTextResponse
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -34,9 +34,11 @@ from ..schemas import (
     PovPlanIn,
     PovPlanOut,
     PovPlanPatch,
+    SetupScriptIn,
 )
 from ..services.demo_builder import generate_demo_plan
 from ..services.export import demo_plan_markdown, pov_plan_markdown
+from ..services.handoff import build_handoff
 from ..services.pov_builder import (
     EvidenceRuleError,
     build_checklist,
@@ -44,15 +46,20 @@ from ..services.pov_builder import (
     create_pov_plan,
     summarise,
 )
+from ..services.pov_readiness import group_name, run_readiness
+from ..services.powershell_script import ScriptError, generate_setup_script
 from .deps import deal_or_404, get_db, get_kb, get_or_404, task_out, tasks_by_id
 
 router = APIRouter()
 
 
+def _slug(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "export"
+
+
 def _markdown(text: str, name: str) -> PlainTextResponse:
-    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "export"
     return PlainTextResponse(text, media_type="text/markdown; charset=utf-8",
-                             headers={"Content-Disposition": f'attachment; filename="{slug}.md"'})
+                             headers={"Content-Disposition": f'attachment; filename="{_slug(name)}.md"'})
 
 
 # --- Demo plans --------------------------------------------------------------
@@ -107,8 +114,11 @@ def _pov_detail(db: Session, plan: PovPlan) -> PovPlanDetail:
     by_id = tasks_by_id(db, plan.deal_id)
     milestones = sorted((t for t in by_id.values() if t.pov_plan_id == plan.id),
                         key=lambda t: (t.due_date is None, t.due_date, t.id))
+    base = PovPlanOut.model_validate(plan).model_dump()
+    # Plans created before portal_group existed fall back to the default name used by scripts and checks.
+    base["portal_group"] = group_name(plan, get_or_404(db, Deal, plan.deal_id).account)
     return PovPlanDetail(
-        **PovPlanOut.model_validate(plan).model_dump(),
+        **base,
         criteria=[CriterionOut.model_validate(c) for c in criteria],
         milestones=[task_out(t, by_id) for t in milestones],
         checklist=build_checklist(criteria, reqs),
@@ -126,7 +136,7 @@ def create_pov(body: PovPlanIn, deal: Deal = Depends(deal_or_404), db: Session =
                kb: KnowledgeBase = Depends(get_kb)) -> PovPlanDetail:
     plan = create_pov_plan(db, kb, deal, title=body.title, objectives=body.objectives,
                            start_date=body.start_date, duration_days=body.duration_days,
-                           draft_criteria=body.draft_criteria_from_requirements)
+                           draft_criteria=body.draft_criteria_from_requirements, portal_group=body.portal_group)
     db.commit()
     return _pov_detail(db, plan)
 
@@ -153,6 +163,41 @@ def export_pov(plan_id: int, db: Session = Depends(get_db)) -> PlainTextResponse
     milestones = db.query(Task).filter_by(pov_plan_id=plan.id).all()
     reqs = db.query(Requirement).filter_by(deal_id=deal.id).all()
     return _markdown(pov_plan_markdown(plan, deal, deal.account, criteria, milestones, reqs), plan.title)
+
+
+@router.post("/pov-plans/{plan_id}/readiness")
+def pov_readiness(plan_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Read-only readiness checks through the LogicMonitor MCP adapter (mock or live)."""
+    plan = get_or_404(db, PovPlan, plan_id)
+    deal = get_or_404(db, Deal, plan.deal_id)
+    return run_readiness(request.app.state.adapters["lm_mcp"], plan, deal.account)
+
+
+@router.post("/pov-plans/{plan_id}/setup-script")
+def pov_setup_script(plan_id: int, body: SetupScriptIn, db: Session = Depends(get_db),
+                     kb: KnowledgeBase = Depends(get_kb)) -> PlainTextResponse:
+    """Logic.Monitor PowerShell script for a person to review and run (dry run by default)."""
+    plan = get_or_404(db, PovPlan, plan_id)
+    deal = get_or_404(db, Deal, plan.deal_id)
+    try:
+        script = generate_setup_script(kb, plan=plan, deal=deal, account=deal.account,
+                                       toolkit_ids=body.toolkit_ids, include_subgroups=body.include_subgroups)
+    except ScriptError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return PlainTextResponse(script, media_type="text/plain; charset=utf-8", headers={
+        "Content-Disposition": f'attachment; filename="pov-setup-{_slug(deal.account.name)}.ps1"'})
+
+
+@router.get("/deals/{deal_id}/handoff")
+def deal_handoff(deal: Deal = Depends(deal_or_404), db: Session = Depends(get_db),
+                 kb: KnowledgeBase = Depends(get_kb), pov_plan_id: int | None = None) -> JSONResponse:
+    """Versioned handoff package for downstream SE platforms (see docs/HANDOFF_FORMAT.md)."""
+    try:
+        package = build_handoff(db, kb, deal, pov_plan_id)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return JSONResponse(package.model_dump(mode="json"), headers={
+        "Content-Disposition": f'attachment; filename="handoff-{_slug(deal.name)}.json"'})
 
 
 @router.delete("/pov-plans/{plan_id}", status_code=204)

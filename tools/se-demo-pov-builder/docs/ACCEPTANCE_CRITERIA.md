@@ -21,7 +21,11 @@ Each criterion lists how it is verified. "Journey test" means
 | AC14 | Workflows are loaded from `workflows/*.yaml`; adding a file adds a workflow without code changes. | `test_knowledge.py` |
 | AC15 | Next actions can be created, updated (owner, due date, status, blocker) and completed. | Journey test; `test_workflow_engine.py` |
 | AC16 | The full journey works with `SEPB_LLM_PROVIDER=none`. | Journey test runs with LLM disabled |
-| AC17 | Adapters are mock-only, label results as simulated, and reject state-changing actions without authorization. | `test_adapters.py` |
+| AC17 | Portal reads go through the public `logicmonitor-api-mcp` tools with list operations only; mock-mode results are labelled simulated; the base contract rejects state-changing actions without authorization; no LogicMonitor credential headers are sent. | `test_adapters.py` |
 | AC18 | Persona, question, scenario and workflow content is validated; broken references are reported. | `test_knowledge.py`; `make validate-content` |
 | AC19 | No secrets are committed; servers bind to loopback by default; request bodies are not logged. | Code review; `test_security.py` |
 | AC20 | Documentation separates implemented, mock and proposed features. | `README.md` "Feature status" table |
+| AC21 | A read-only POV readiness check reports collectors, the POV resource group and critical alerts, records the tool calls, and can be attached as evidence with the simulated flag preserved. | `test_lm_integration.py`; `PovTab.test.tsx` |
+| AC22 | A Logic.Monitor setup script can be generated for a POV: dry run unless `-Apply`, no embedded credentials, pinned public sources, dependencies resolved, existing modules never overwritten, user text safely escaped. | `test_lm_integration.py` |
+| AC23 | A versioned handoff package (with JSON Schema) can be exported for downstream SE platforms; simulated evidence is flagged. | `test_lm_integration.py` |
+| AC24 | Public LM tooling is catalogued with pinned commits and licences; references are validated. | `test_knowledge.py`; `make validate-content` |

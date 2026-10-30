@@ -1,5 +1,6 @@
 import { api } from "../api";
-import { ErrorBanner, useAsync } from "../ui";
+import { useState } from "react";
+import { attempt, downloadText, ErrorBanner, slug, useAsync } from "../ui";
 import OverviewTab from "../components/deal/OverviewTab";
 import StakeholdersTab from "../components/deal/StakeholdersTab";
 import DiscoveryTab from "../components/deal/DiscoveryTab";
@@ -23,6 +24,7 @@ const TABS: { id: string; label: string; count?: (d: DealDetail) => string }[] =
 
 export default function DealWorkspace({ dealId, tab, llmEnabled }: { dealId: number; tab: string; llmEnabled: boolean }) {
   const deal = useAsync(() => api.deal(dealId), [dealId]);
+  const [error, setError] = useState<string | null>(null);
   const refresh = () => void deal.reload();
   const d = deal.data;
 
@@ -36,7 +38,13 @@ export default function DealWorkspace({ dealId, tab, llmEnabled }: { dealId: num
           <div className="muted small"><a href="#/">Deals</a> / {d.account.name}</div>
           <h1>{d.name}</h1>
         </div>
+        <button type="button" className="secondary" title="Versioned JSON package for downstream SE platforms such as LMDA"
+          onClick={() => attempt(async () => downloadText(`handoff-${slug(d.name)}.json`,
+            JSON.stringify(await api.handoff(dealId), null, 2), "application/json"), setError)}>
+          Export LMDA handoff (JSON)
+        </button>
       </div>
+      <ErrorBanner error={error} onDismiss={() => setError(null)} />
       <nav className="tabs" aria-label="Deal sections">
         {TABS.map((t) => (
           <a key={t.id} href={`#/deals/${dealId}/${t.id}`} className={tab === t.id ? "active" : undefined}>
