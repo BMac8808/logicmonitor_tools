@@ -136,11 +136,15 @@ class StakeholderOut(ORM):
 
 
 # --- Discovery ---------------------------------------------------------------
+QuestionCategory = Literal["business", "technical", "process", "qualification", "stakeholder"]
+
+
 class AnswerIn(BaseModel):
     answer: str = Field(min_length=1)
     stakeholder_id: int | None = None
-    evidence_source: str = ""
+    evidence_source: str = Field(default="", max_length=300)
     confidence: Confidence = "confirmed"
+    evidence_quote: str | None = Field(default=None, max_length=4000)
 
 
 class AnswerOut(ORM):
@@ -150,6 +154,7 @@ class AnswerOut(ORM):
     answer: str
     evidence_source: str
     confidence: str
+    evidence_quote: str | None = None
     updated_at: datetime
 
 
@@ -158,19 +163,107 @@ class QuestionOut(BaseModel):
     text: str
     category: str
     purpose: str
-    listen_for: list[str]
-    suggests_capabilities: list[str]
+    listen_for: list[str] = []
+    suggests_capabilities: list[str] = []
     qualification_key: str | None
     priority: int
-    relevant_personas: list[str]
+    relevant_personas: list[str] = []
+    # True when the question is picked for this deal's personas and technologies.
+    suggested: bool = True
+    # True for a question added to this deal only (id "custom-<n>").
+    custom: bool = False
     answer: AnswerOut | None = None
 
 
+class NextQuestionOut(BaseModel):
+    question_id: str
+    reason: str
+
+
 class DiscoveryQuestionsOut(BaseModel):
+    """Every bank question plus the deal's custom questions. ``answered``/``total`` count the
+    questions in scope: suggested, custom, or already answered."""
     questions: list[QuestionOut]
     answered: int
     total: int
+    bank_total: int
+    next_up: list[NextQuestionOut]
     unmatched_answers: list[AnswerOut]
+
+
+class CustomQuestionIn(BaseModel):
+    text: str = Field(min_length=3, max_length=500)
+    category: QuestionCategory = "business"
+    purpose: str = Field(default="", max_length=500)
+    qualification_key: str | None = None
+
+
+class CustomQuestionsBulkIn(BaseModel):
+    questions: list[CustomQuestionIn] = Field(min_length=1, max_length=100)
+
+
+class SkippedQuestion(BaseModel):
+    text: str
+    reason: str
+
+
+class CustomQuestionsBulkOut(BaseModel):
+    created: list[QuestionOut]
+    skipped: list[SkippedQuestion]
+
+
+# --- Transcript / question-list import (stateless proposals) -----------------
+class TranscriptIn(BaseModel):
+    text: str = Field(min_length=1, max_length=500_000)
+    filename: str = Field(default="", max_length=200)
+    use_ai: bool = False
+
+
+class TranscriptProposal(BaseModel):
+    question_id: str
+    question: str
+    category: str
+    quote: str
+    speaker: str | None
+    timestamp: str | None
+    proposed_answer: str
+    matched: list[str]
+    method: Literal["keyword", "ai"]
+    score: int
+    existing_answer: AnswerOut | None = None
+
+
+class TranscriptProposalsOut(BaseModel):
+    format: Literal["vtt", "srt", "text"]
+    segments: int
+    proposals: list[TranscriptProposal]
+    ai_used: bool
+    notes: list[str]
+
+
+class TranscriptAcceptIn(BaseModel):
+    """One reviewed proposal. Always saved as an *assumed* answer."""
+    question_id: str
+    answer: str = Field(min_length=1, max_length=10_000)
+    quote: str = Field(min_length=1, max_length=4000)
+    speaker: str | None = Field(default=None, max_length=200)
+    timestamp: str | None = Field(default=None, max_length=40)
+    filename: str = Field(default="", max_length=200)
+
+
+class QuestionListIn(BaseModel):
+    text: str = Field(min_length=1, max_length=200_000)
+
+
+class QuestionListProposal(BaseModel):
+    text: str
+    category: QuestionCategory
+    duplicate_of: str | None = None
+    duplicate_text: str | None = None
+
+
+class QuestionListOut(BaseModel):
+    proposals: list[QuestionListProposal]
 
 
 class GapOut(BaseModel):

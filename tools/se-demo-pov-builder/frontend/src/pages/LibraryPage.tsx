@@ -79,7 +79,7 @@ export default function LibraryPage({ onReloaded }: { onReloaded: () => void }) 
                   <td><strong>{c.name}</strong><div className="muted small"><code>{c.id}</code></div></td>
                   <td>{c.category}</td>
                   <td className="small">{c.description}<div className="muted">Keywords: {c.keywords.join(", ")}</div></td>
-                  <td>{c.verified ? <Badge tone="good">verified</Badge> : <Badge tone="warn">unverified</Badge>}</td>
+                  <td>{c.verified ? <Badge tone="good">verified</Badge> : <span className="muted small">no</span>}</td>
                 </tr>
               ))}
             </tbody>

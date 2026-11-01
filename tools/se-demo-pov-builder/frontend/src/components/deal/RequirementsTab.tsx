@@ -1,7 +1,26 @@
 import { useState } from "react";
 import { api } from "../../api";
-import type { CapabilityMatch, Priority, Requirement } from "../../types";
-import { attempt, Badge, Empty, ErrorBanner, StatusBadge, useAsync, useLibrary } from "../../ui";
+import type { CapabilityMatch, Priority, Question, Requirement } from "../../types";
+import { attempt, CapabilityChip, Empty, ErrorBanner, StatusBadge, UnverifiedNotice, useAsync, useLibrary } from "../../ui";
+
+/** Where a requirement came from: the discovery question and the answer saved for it. */
+function SourceQuestion({ id, question }: { id: string; question: Question | undefined }) {
+  if (!question) {
+    return <div className="muted small">From discovery: a question that no longer exists ({id})</div>;
+  }
+  const a = question.answer;
+  return (
+    <div className="small source-q">
+      <span className="muted">From discovery:</span> {question.text}
+      {a ? (
+        <div>
+          <span className="muted">Answer:</span> “{a.answer}” <StatusBadge value={a.confidence} />
+          {a.evidence_source && <span className="muted"> · {a.evidence_source}</span>}
+        </div>
+      ) : <div className="muted">No answer saved for this question.</div>}
+    </div>
+  );
+}
 
 function CapabilityPicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
   const lib = useLibrary();
@@ -16,6 +35,10 @@ function CapabilityPicker({ value, onChange }: { value: string[]; onChange: (v: 
 export default function RequirementsTab({ dealId, onChange }: { dealId: number; onChange: () => void }) {
   const lib = useLibrary();
   const reqs = useAsync(() => api.requirements(dealId), [dealId]);
+  const questions = useAsync(() => api.questions(dealId), [dealId]);
+  const questionById = new Map((questions.data?.questions ?? []).map((q) => [q.id, q]));
+  const mapped = [...new Set((reqs.data ?? []).flatMap((r) => r.capability_ids))];
+  const verified = new Map(lib.capabilities.capabilities.map((c) => [c.id, c.verified]));
   const [form, setForm] = useState({ title: "", description: "", pain_point: "", business_impact: "", priority: "should" as Priority, category: "technical" as "technical" | "business" });
   const [impactEdit, setImpactEdit] = useState<{ id: number; value: string } | null>(null);
   const [caps, setCaps] = useState<string[]>([]);
@@ -98,6 +121,7 @@ export default function RequirementsTab({ dealId, onChange }: { dealId: number; 
       </form>
       <div className="card">
         <h2>Requirements</h2>
+        <UnverifiedNotice count={mapped.filter((c) => !verified.get(c)).length} total={mapped.length} />
         {!reqs.data?.length ? (
           <Empty>No requirements yet.</Empty>
         ) : (
@@ -122,7 +146,7 @@ export default function RequirementsTab({ dealId, onChange }: { dealId: number; 
                         <button type="button" className="link small" onClick={() => setImpactEdit({ id: r.id, value: r.business_impact ?? "" })}>Edit</button>
                       </div>
                     )}
-                    {r.source_question_id && <div className="muted small">From discovery: <code>{r.source_question_id}</code></div>}
+                    {r.source_question_id && <SourceQuestion id={r.source_question_id} question={questionById.get(r.source_question_id)} />}
                     {(() => {
                       const refs = lib.ecosystem.references.filter((ref) => ref.capabilities.some((c) => r.capability_ids.includes(c)));
                       return refs.length > 0 && (
@@ -151,7 +175,9 @@ export default function RequirementsTab({ dealId, onChange }: { dealId: number; 
                     ) : (
                       <>
                         <div className="chips">
-                          {r.capability_ids.length ? r.capability_ids.map((c) => <Badge key={c}>{lib.capabilityName(c)}</Badge>) : <StatusBadge value="missing" />}
+                          {r.capability_ids.length
+                            ? r.capability_ids.map((c) => <CapabilityChip key={c} name={lib.capabilityName(c)} verified={verified.get(c) ?? false} />)
+                            : <StatusBadge value="tbd" />}
                         </div>
                         <button type="button" className="link small" onClick={() => { setEditing(r.id); setEditCaps(r.capability_ids); }}>Edit mapping</button>
                       </>

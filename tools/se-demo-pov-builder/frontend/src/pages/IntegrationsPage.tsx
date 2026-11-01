@@ -20,7 +20,7 @@ function ActionRunner({ adapter, action }: { adapter: Adapter; action: AdapterAc
     <div className="question">
       <div className="row spread">
         <div>
-          <code>{action.name}</code> <Badge tone="info">read-only</Badge>{" "}
+          <code>{action.name}</code> <Badge tone="outline">read-only</Badge>{" "}
           {action.mcp_tool && <span className="muted small">MCP tool <code>{action.mcp_tool}</code></span>}
           <div className="muted small">{action.description}</div>
         </div>

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { api } from "../../api";
 import type { Gap } from "../../types";
-import { attempt, Empty, ErrorBanner, StatusBadge } from "../../ui";
+import { attempt, Empty, ErrorBanner, Generated, StatusBadge } from "../../ui";
 
+/** Stacked rows (not a table) so the text keeps its width in a narrow side column. */
 export default function GapsList({ dealId, gaps, onChange, limit }: {
   dealId: number; gaps: Gap[]; onChange?: () => void; limit?: number;
 }) {
@@ -21,26 +22,22 @@ export default function GapsList({ dealId, gaps, onChange, limit }: {
   return (
     <div>
       <ErrorBanner error={error} onDismiss={() => setError(null)} />
-      <table>
-        <tbody>
-          {shown.map((g) => (
-            <tr key={g.code}>
-              <td style={{ width: 80 }}><StatusBadge value={g.severity} /></td>
-              <td>
-                <div>{g.message}</div>
-                <div className="muted small">Suggested: {g.suggested_action}</div>
-              </td>
-              <td style={{ width: 150, textAlign: "right" }}>
-                {added.has(g.code) ? (
-                  <span className="muted small">Added ✓</span>
-                ) : (
-                  <button type="button" className="secondary" onClick={() => addAction(g)}>Add next action</button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {shown.map((g) => (
+        <div key={g.code} className="gap-item">
+          <div className="gap-head">
+            <StatusBadge value={g.severity} />
+            <span>{g.message}</span>
+          </div>
+          <div className="small gap-actions">
+            <Generated label="Suggested next action">Suggested: {g.suggested_action}</Generated>{" "}
+            {added.has(g.code) ? (
+              <span className="muted">· Added ✓</span>
+            ) : (
+              <button type="button" className="link small" onClick={() => addAction(g)}>Add next action</button>
+            )}
+          </div>
+        </div>
+      ))}
       {limit && gaps.length > limit && <p className="muted small">+{gaps.length - limit} more on the Discovery tab.</p>}
     </div>
   );

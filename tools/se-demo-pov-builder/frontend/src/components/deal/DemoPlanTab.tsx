@@ -1,23 +1,47 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
 import type { DemoPlan } from "../../types";
-import { attempt, Badge, downloadText, Empty, ErrorBanner, slug, StatusBadge, useAsync } from "../../ui";
+import {
+  attempt, CapabilityChip, downloadText, Empty, ErrorBanner, Generated, slug, StatusBadge, Tile, UnverifiedNotice, useAsync,
+} from "../../ui";
 
 function List({ items, empty = "None" }: { items: string[]; empty?: string }) {
-  return items.length ? <ul>{items.map((i) => <li key={i}>{i}</li>)}</ul> : <p className="empty">{empty}</p>;
+  return items.length ? <ul className="gen">{items.map((i) => <li key={i}>{i}</li>)}</ul> : <p className="empty">{empty}</p>;
 }
 
 function PlanView({ plan }: { plan: DemoPlan }) {
   const c = plan.content;
+  const caps = new Map(c.segments.flatMap((s) => s.capabilities).map((cap) => [cap.id, cap]));
+  const unverified = [...caps.values()].filter((cap) => !cap.verified).length;
+  // Must/should requirements, like uncovered_requirements.
+  const covered = new Set(c.segments.flatMap((s) => s.linked_requirements.filter((r) => r.priority !== "could").map((r) => r.id)));
+  const tracked = covered.size + c.uncovered_requirements.length;
+  const scheduled = c.agenda.reduce((sum, a) => sum + a.minutes, 0);
   return (
     <div>
       {c.generic && (
         <div className="banner banner-warn">Generic plan: no discovery finding matched a scenario. Complete discovery to tailor it.</div>
       )}
+      <div className="tiles" aria-label="Demo plan summary">
+        <Tile tone="info" value={c.segments.length} label="Scenarios" />
+        <Tile tone={scheduled === plan.duration_minutes ? "good" : "warn"} value={`${scheduled}/${plan.duration_minutes}`} label="Minutes scheduled" />
+        <Tile tone={c.uncovered_requirements.length ? "warn" : "good"} value={`${covered.size}/${tracked}`}
+          label="Requirements covered" hint="Must/should requirements shown by at least one scenario" />
+        <Tile tone={c.uncovered_requirements.length ? "warn" : "good"} value={c.uncovered_requirements.length} label="Not covered" />
+        <Tile tone={unverified ? "warn" : "good"} value={unverified} label="Unverified capabilities" />
+        <Tile tone={c.missing_evidence.length ? "warn" : "good"} value={c.missing_evidence.length} label="Missing evidence" />
+      </div>
+      {c.uncovered_requirements.length > 0 && (
+        <div className="callout callout-warn" role="note" aria-label="Requirements not covered">
+          <h4>{c.uncovered_requirements.length} requirement(s) not covered by this demo</h4>
+          <ul>{c.uncovered_requirements.map((r) => <li key={r.id}><StatusBadge value={r.priority} /> {r.title}</li>)}</ul>
+          <div className="small">Add a scenario that shows them, cover them in the POV, or agree with the customer that they're out of scope.</div>
+        </div>
+      )}
       <div className="grid grid-2">
         <div className="card">
           <h3>Agenda ({plan.duration_minutes} min)</h3>
-          <table className="agenda">
+          <table className="agenda gen">
             <tbody>
               {c.agenda.map((a) => (
                 <tr key={`${a.start_minute}-${a.title}`}>
@@ -35,25 +59,30 @@ function PlanView({ plan }: { plan: DemoPlan }) {
           <h3>Audience</h3>
           {c.audience_focus.length ? c.audience_focus.map((a) => (
             <div key={a.persona_id} className="small" style={{ marginBottom: 6 }}>
-              <strong>{a.persona}</strong> ({a.stakeholders.join(", ")}): {a.focus.join("; ")}
+              <strong>{a.persona}</strong> ({a.stakeholders.join(", ")}): <Generated>{a.focus.join("; ")}</Generated>
             </div>
           )) : <Empty>No stakeholders recorded.</Empty>}
         </div>
       </div>
       <div className="card">
         <h3>Scenarios</h3>
+        <p className="muted small" style={{ marginBottom: 2 }}>
+          Customer pain points and stakeholder names are yours; <Generated>italic text</Generated> is generated from the scenario library.
+        </p>
+        <UnverifiedNotice count={unverified} total={caps.size} />
         {c.segments.map((s) => (
           <div key={s.scenario_id} className="segment">
             <div className="row spread">
               <h4>{s.title} <span className="muted">· {s.minutes} min</span></h4>
               <div className="chips">
-                {s.capabilities.map((cap) => (
-                  <Badge key={cap.id} tone={cap.verified ? "good" : "neutral"}>{cap.name}{cap.verified ? "" : " · unverified"}</Badge>
-                ))}
+                {s.capabilities.map((cap) => <CapabilityChip key={cap.id} name={cap.name} verified={cap.verified} />)}
               </div>
             </div>
-            <p>{s.summary}</p>
-            <p className="small muted">Why: {s.selection_reason}</p>
+            <p className="gen">{s.summary}</p>
+            {s.linked_requirements.length > 0 && (
+              <p className="small">Shows: {s.linked_requirements.map((r) => r.title).join(" · ")}</p>
+            )}
+            <p className="small"><span className="muted">Why:</span> <Generated>{s.selection_reason}</Generated></p>
             <div className="grid grid-2">
               <div>
                 <h4>Demonstrates</h4>
@@ -64,7 +93,7 @@ function PlanView({ plan }: { plan: DemoPlan }) {
                 {s.talking_points.map((tp) => (
                   <div key={tp.audience} className="small">
                     <em>{tp.audience}{tp.stakeholders.length ? ` — ${tp.stakeholders.join(", ")}` : ""}</em>
-                    <ul>{tp.points.map((p) => <li key={p}>{p}</li>)}</ul>
+                    <ul className="gen">{tp.points.map((p) => <li key={p}>{p}</li>)}</ul>
                   </div>
                 ))}
               </div>
@@ -77,11 +106,7 @@ function PlanView({ plan }: { plan: DemoPlan }) {
         <div className="card"><h3>Data requirements</h3><List items={c.data_requirements} /></div>
         <div className="card"><h3>Preparation tasks</h3><List items={c.prep_tasks} /></div>
       </div>
-      <div className="grid grid-3">
-        <div className="card">
-          <h3>Not covered by this demo</h3>
-          <List items={c.uncovered_requirements.map((r) => `${r.title} (${r.priority})`)} empty="All must/should requirements are covered." />
-        </div>
+      <div className="grid grid-2">
         <div className="card"><h3>Assumptions</h3><List items={c.assumptions} /></div>
         <div className="card"><h3>Missing evidence</h3><List items={c.missing_evidence} /></div>
       </div>

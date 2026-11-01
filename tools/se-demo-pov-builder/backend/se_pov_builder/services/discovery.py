@@ -9,9 +9,7 @@ from dataclasses import asdict, dataclass
 
 from ..knowledge import DiscoveryQuestion, KnowledgeBase
 from ..models import DemoPlan, DiscoveryAnswer, Requirement, Stakeholder, SuccessCriterion
-
-CATEGORY_ORDER = {"business": 0, "qualification": 1, "technical": 2, "process": 3, "stakeholder": 4}
-HIGH_PRIORITY_QUALIFICATION = {"pain", "business_impact", "success_criteria", "decision_process"}
+from .questions import CATEGORY_ORDER, HIGH_PRIORITY_QUALIFICATION, QuestionRef, question_index
 
 
 def keyword_in(keyword: str, text: str) -> bool:
@@ -47,7 +45,7 @@ def match_capabilities(
     kb: KnowledgeBase, text: str, source_question_id: str | None = None
 ) -> list[CapabilityMatch]:
     lowered = text.lower()
-    hinted = set()
+    hinted: set[str] = set()
     if source_question_id and source_question_id in kb.questions:
         hinted = set(kb.questions[source_question_id].suggests_capabilities)
     matches: list[CapabilityMatch] = []
@@ -89,7 +87,10 @@ def analyse_gaps(
     requirements: list[Requirement],
     criteria: list[SuccessCriterion],
     demo_plans: list[DemoPlan],
+    questions: dict[str, QuestionRef] | None = None,
 ) -> list[Gap]:
+    """``questions`` is the deal's question index (bank + custom); defaults to the bank."""
+    questions = questions if questions is not None else question_index(kb)
     gaps: list[Gap] = []
     persona_ids = {s.persona_id for s in stakeholders}
 
@@ -110,7 +111,7 @@ def analyse_gaps(
 
     answered = {a.question_id: a for a in answers if a.answer.strip()}
     for item in kb.discovery.qualification_checklist:
-        linked = [q.id for q in kb.discovery.questions if q.qualification_key == item.key]
+        linked = [q.id for q in questions.values() if q.qualification_key == item.key]
         confirmed = [qid for qid in linked if qid in answered and answered[qid].confidence == "confirmed"]
         if confirmed:
             continue
@@ -126,8 +127,8 @@ def analyse_gaps(
                             f"Cover {item.label.lower()} in the next discovery conversation."))
 
     for a in answers:
-        if a.confidence == "assumed" and a.question_id in kb.questions:
-            q = kb.questions[a.question_id]
+        if a.confidence == "assumed" and a.question_id in questions:
+            q = questions[a.question_id]
             if q.qualification_key:
                 continue  # already reported at checklist level
             gaps.append(Gap(f"assumed_answer:{a.question_id}", "evidence", "low",

@@ -35,9 +35,11 @@ def test_primary_user_journey(client):
 
     # 3. Discovery: tailored questions, answers persisted, gaps and suggestions.
     qs = client.get(f"/api/deals/{deal_id}/discovery/questions").json()
-    ids = {q["id"] for q in qs["questions"]}
+    assert len(qs["questions"]) == qs["bank_total"] == 31  # every bank question can be browsed
+    ids = {q["id"] for q in qs["questions"] if q["suggested"]}
     assert {"biz_trigger", "tech_network", "tech_servers", "tech_itsm"} <= ids
     assert "tech_kubernetes" not in ids
+    assert 3 <= len(qs["next_up"]) <= 5
     answers = {
         "biz_trigger": ("Clinical app outages last month; renewal in Q2", "confirmed"),
         "biz_impact": ("90 minutes to detect a core switch failure", "confirmed"),

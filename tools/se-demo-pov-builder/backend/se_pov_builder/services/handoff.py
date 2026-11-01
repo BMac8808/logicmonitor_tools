@@ -29,6 +29,7 @@ from ..models import (
 )
 from .discovery import analyse_gaps
 from .pov_readiness import group_name
+from .questions import deal_question_index, qualification_status
 from .workflow_engine import CLOSED
 
 FORMAT_ID = "se-demo-pov-builder/handoff"
@@ -85,6 +86,8 @@ class HDiscoveryItem(BaseModel):
     confidence: Literal["confirmed", "assumed"]
     answered_by: str | None
     evidence_source: str
+    # Exact transcript words the SE accepted as evidence (optional; v1-compatible addition).
+    evidence_quote: str | None = None
 
 
 class HQualification(BaseModel):
@@ -224,12 +227,10 @@ def build_handoff(
                 for c in ids if c in kb.capabilities]
 
     by_q = {a.question_id: a for a in answers}
-    qualification = []
-    for item in kb.discovery.qualification_checklist:
-        confs = [by_q[q.id].confidence for q in kb.discovery.questions if q.qualification_key == item.key
-                 and q.id in by_q]
-        status = "confirmed" if "confirmed" in confs else "assumed" if confs else "missing"
-        qualification.append(HQualification(key=item.key, label=item.label, status=status))
+    index = deal_question_index(session, kb, deal.id)
+    status = qualification_status(kb, index, by_q)
+    qualification = [HQualification(key=item.key, label=item.label, status=status[item.key][0])
+                     for item in kb.discovery.qualification_checklist]
 
     pov = None
     if plan is not None:
@@ -251,12 +252,13 @@ def build_handoff(
                         for t in milestones],
         )
 
-    assumptions = [f"{kb.questions[a.question_id].text} → {a.answer}" for a in answers
-                   if a.confidence == "assumed" and a.question_id in kb.questions]
+    assumptions = [f"{index[a.question_id].text} → {a.answer}" for a in answers
+                   if a.confidence == "assumed" and a.question_id in index]
     if demo:
         assumptions += [a for a in demo.content.get("assumptions", []) if not a.startswith("Assumed, not confirmed")]
     gaps = analyse_gaps(kb, technical_context=deal.technical_context, stakeholders=stakeholders, answers=answers,
-                        requirements=reqs, criteria=criteria_all, demo_plans=[demo] if demo else [])
+                        requirements=reqs, criteria=criteria_all, demo_plans=[demo] if demo else [],
+                        questions=index)
     decision = by_q.get("qual_criteria")
 
     return HandoffPackage(
@@ -278,11 +280,11 @@ def build_handoff(
                            influence=s.influence, stance=s.stance, notes=s.notes) for s in stakeholders],
         discovery=[HDiscoveryItem(
             question_id=a.question_id,
-            question=kb.questions[a.question_id].text if a.question_id in kb.questions else a.question_id,
-            category=kb.questions[a.question_id].category if a.question_id in kb.questions else "unknown",
-            qualification_key=kb.questions[a.question_id].qualification_key if a.question_id in kb.questions else None,
+            question=index[a.question_id].text if a.question_id in index else a.question_id,
+            category=index[a.question_id].category if a.question_id in index else "unknown",
+            qualification_key=index[a.question_id].qualification_key if a.question_id in index else None,
             answer=a.answer, confidence=a.confidence, answered_by=names.get(a.stakeholder_id or -1),
-            evidence_source=a.evidence_source,
+            evidence_source=a.evidence_source, evidence_quote=a.evidence_quote,
         ) for a in answers],
         qualification=qualification,
         decision_criteria_notes=decision.answer if decision else None,

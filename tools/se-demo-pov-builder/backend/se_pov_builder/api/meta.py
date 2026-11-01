@@ -14,6 +14,7 @@ from ..schemas import AdapterActionIn, CapabilityMatchIn, CapabilityMatchOut, LL
 from ..seed import SAMPLE_DEAL_NAME, seed_sample_engagement
 from ..services.discovery import match_capabilities
 from ..services.handoff import HandoffPackage
+from ..services.questions import deal_question_index
 from .deps import deal_or_404, get_db, get_kb
 
 router = APIRouter()
@@ -175,11 +176,12 @@ def discovery_summary(
     stakeholders = db.query(Stakeholder).filter_by(deal_id=deal.id).all()
     answers = db.query(DiscoveryAnswer).filter_by(deal_id=deal.id).all()
     reqs = db.query(Requirement).filter_by(deal_id=deal.id).all()
+    index = deal_question_index(db, kb, deal.id)
     lines = [f"Deal: {deal.name}", f"Summary: {deal.summary}", "Stakeholders:"]
     lines += [f"- {s.name} ({s.title}), persona: {s.persona_id}, stance: {s.stance}" for s in stakeholders]
     lines.append("Discovery answers:")
     lines += [
-        f"- Q: {kb.questions[a.question_id].text if a.question_id in kb.questions else a.question_id}\n"
+        f"- Q: {index[a.question_id].text if a.question_id in index else a.question_id}\n"
         f"  A ({a.confidence}): {a.answer}"
         for a in answers
     ]

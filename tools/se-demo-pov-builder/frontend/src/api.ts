@@ -2,7 +2,7 @@
 import type {
   Account, Adapter, AdapterResult, Answer, CapabilityCatalog, CapabilityMatch, Criterion, Deal, DealDetail,
   DealListItem, DemoPlan, DemoPlanSummary, DemoScenario, DiscoveryLibrary, DiscoveryQuestions, Ecosystem, Evidence,
-  Gaps, Meta, ReadinessResult, Persona, PovPlan, PovPlanSummary, Requirement, Stakeholder, Task, WorkflowDefinition, WorkflowRun,
+  CustomQuestionInput, Gaps, Meta, Question, QuestionListProposal, ReadinessResult, TranscriptProposals, Persona, PovPlan, PovPlanSummary, Requirement, Stakeholder, Task, WorkflowDefinition, WorkflowRun,
 } from "./types";
 
 const TOKEN_KEY = "sepb_api_token";
@@ -95,6 +95,20 @@ export const api = {
     put<Answer>(`/deals/${dealId}/discovery/answers/${questionId}`, body),
   deleteAnswer: (dealId: number, questionId: string) => del(`/deals/${dealId}/discovery/answers/${questionId}`),
   gaps: (dealId: number) => get<Gaps>(`/deals/${dealId}/discovery/gaps`),
+  addCustomQuestion: (dealId: number, body: CustomQuestionInput) =>
+    post<Question>(`/deals/${dealId}/discovery/custom-questions`, body),
+  addCustomQuestions: (dealId: number, questions: CustomQuestionInput[]) =>
+    post<{ created: Question[]; skipped: { text: string; reason: string }[] }>(
+      `/deals/${dealId}/discovery/custom-questions/bulk`, { questions }),
+  deleteCustomQuestion: (dealId: number, questionId: string) =>
+    del(`/deals/${dealId}/discovery/custom-questions/${questionId}`),
+  transcriptProposals: (dealId: number, body: { text: string; filename: string; use_ai: boolean }) =>
+    post<TranscriptProposals>(`/deals/${dealId}/discovery/transcript/proposals`, body),
+  acceptTranscriptAnswer: (dealId: number, body: {
+    question_id: string; answer: string; quote: string; speaker: string | null; timestamp: string | null; filename: string;
+  }) => post<Answer>(`/deals/${dealId}/discovery/transcript/accept`, body),
+  questionListProposals: (dealId: number, text: string) =>
+    post<{ proposals: QuestionListProposal[] }>(`/deals/${dealId}/discovery/question-list/proposals`, { text }),
 
   requirements: (dealId: number) => get<Requirement[]>(`/deals/${dealId}/requirements`),
   createRequirement: (dealId: number, body: Omit<Partial<Requirement>, "capability_ids"> & { capability_ids?: string[] | null }) =>

@@ -33,6 +33,7 @@ from ..schemas import (
     StakeholderPatch,
 )
 from ..services.discovery import analyse_gaps, applicable_questions
+from ..services.questions import deal_question_index
 from ..services.workflow_engine import CLOSED
 from .deps import deal_or_404, get_db, get_kb, get_or_404
 from .integrations import import_link
@@ -110,16 +111,20 @@ def deal_metrics(db: Session, kb: KnowledgeBase, deal: Deal) -> dict:
     criteria = db.query(SuccessCriterion).filter_by(deal_id=deal.id).all()
     demo_plans = db.query(DemoPlan).filter_by(deal_id=deal.id).all()
     tasks = db.query(Task).filter_by(deal_id=deal.id).all()
-    questions = applicable_questions(kb, [s.persona_id for s in stakeholders], deal.technical_context)
-    answered_ids = {a.question_id for a in answers}
+    index = deal_question_index(db, kb, deal.id)
+    answered_ids = {a.question_id for a in answers if a.question_id in index}
+    suggested = {q.id for q in applicable_questions(kb, [s.persona_id for s in stakeholders], deal.technical_context)}
+    # Same scope as the Discovery tab: suggested, custom, or already answered.
+    in_scope = {qid for qid, q in index.items() if qid in suggested or q.custom} | answered_ids
     gaps = analyse_gaps(kb, technical_context=deal.technical_context, stakeholders=stakeholders,
-                        answers=answers, requirements=reqs, criteria=criteria, demo_plans=demo_plans)
+                        answers=answers, requirements=reqs, criteria=criteria, demo_plans=demo_plans,
+                        questions=index)
     today = date.today()
     open_tasks = [t for t in tasks if t.status not in CLOSED]
     return {
         "stakeholders": len(stakeholders),
-        "questions_total": len(questions),
-        "questions_answered": sum(1 for q in questions if q.id in answered_ids),
+        "questions_total": len(in_scope),
+        "questions_answered": len(answered_ids),
         "requirements": len(reqs),
         "criteria_total": len(criteria),
         "criteria_met": sum(1 for c in criteria if c.status == "met"),

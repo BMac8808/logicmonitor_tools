@@ -3,7 +3,7 @@ import { api } from "../../api";
 import type { Criterion, CriterionStatus, PovPlan, Requirement } from "../../types";
 import PortalSetupCard from "./PortalSetupCard";
 import TaskTable from "./TaskTable";
-import { attempt, downloadText, Empty, ErrorBanner, SimulatedBadge, slug, StatusBadge, useAsync } from "../../ui";
+import { attempt, downloadText, Empty, ErrorBanner, Generated, SimulatedBadge, slug, StatusBadge, Tile, useAsync } from "../../ui";
 
 const CRITERION_STATUSES: CriterionStatus[] = ["not_started", "in_progress", "met", "not_met", "waived"];
 const EVIDENCE_TYPES = ["observation", "screenshot", "document", "metric", "customer_confirmation"];
@@ -78,7 +78,7 @@ function CriterionCard({ c, reqs, onChange }: { c: Criterion; reqs: Requirement[
         </div>
       </div>
       <ErrorBanner error={error} onDismiss={() => setError(null)} />
-      {c.notes && <p className="small muted">{c.notes}</p>}
+      {c.notes && <p className="small"><Generated label="Generated note">{c.notes}</Generated></p>}
       {editing ? (
         <div className="form-grid">
           <label className="full">Title<input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
@@ -127,6 +127,10 @@ function CriterionCard({ c, reqs, onChange }: { c: Criterion; reqs: Requirement[
 
 function PovDetail({ plan, reqs, reload }: { plan: PovPlan; reqs: Requirement[]; reload: () => void }) {
   const s = plan.summary;
+  const count = (status: CriterionStatus) => plan.criteria.filter((c) => c.status === status).length;
+  const tbd = plan.checklist.flatMap((g) => g.items).filter((i) => !i.ready).length;
+  const withCriteria = new Set(plan.criteria.map((c) => c.requirement_id));
+  const uncovered = reqs.filter((r) => r.priority !== "could" && !withCriteria.has(r.id));
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(blankCriterion);
 
@@ -162,15 +166,26 @@ function PovDetail({ plan, reqs, reload }: { plan: PovPlan; reqs: Requirement[];
           </div>
         </div>
         {plan.objectives && <p style={{ marginTop: 8 }}>{plan.objectives}</p>}
-        <div className="metrics" style={{ marginTop: 8 }}>
-          <div className="metric"><div className="value">{s.criteria_met}/{s.criteria_total}</div><div className="label">Criteria met</div></div>
-          <div className="metric"><div className="value">{s.must_have_met}/{s.must_have_total}</div><div className="label">Must-have met</div></div>
-          <div className="metric"><div className="value">{s.milestones_closed}/{s.milestones_total}</div><div className="label">Milestones closed</div></div>
-          <div className="metric"><div className="value">{s.evidence_real}</div><div className="label">Real evidence items</div></div>
-          {s.evidence_simulated > 0 && (
-            <div className="metric"><div className="value">{s.evidence_simulated}</div><div className="label">Simulated (not counted)</div></div>
-          )}
+        <div className="tiles" aria-label="POV summary">
+          <Tile tone="good" value={`${s.criteria_met}/${s.criteria_total}`} label="Criteria met" />
+          <Tile tone={s.must_have_total && s.must_have_met === s.must_have_total ? "good" : "info"}
+            value={`${s.must_have_met}/${s.must_have_total}`} label="Must-have met" />
+          <Tile tone="info" value={count("in_progress")} label="In progress" />
+          <Tile tone="neutral" value={count("not_started")} label="Not started" />
+          <Tile tone={count("not_met") ? "bad" : "neutral"} value={count("not_met")} label="Not met" />
+          <Tile tone={tbd ? "warn" : "good"} value={tbd} label="Criteria TBD" hint="No measurable outcome or validation method yet" />
+          <Tile tone={s.milestones_closed === s.milestones_total && s.milestones_total ? "good" : "info"}
+            value={`${s.milestones_closed}/${s.milestones_total}`} label="Milestones closed" />
+          <Tile tone={s.evidence_real ? "good" : "neutral"} value={s.evidence_real} label="Real evidence items" />
+          {s.evidence_simulated > 0 && <Tile tone="sim" value={s.evidence_simulated} label="Simulated (not counted)" />}
         </div>
+        {uncovered.length > 0 && (
+          <div className="callout callout-warn" role="note" aria-label="Requirements without success criteria">
+            <h4>{uncovered.length} requirement(s) have no success criterion in this POV</h4>
+            <ul>{uncovered.map((r) => <li key={r.id}><StatusBadge value={r.priority} /> {r.title}</li>)}</ul>
+            <div className="small">Add a criterion below, or agree with the customer that they're out of scope for the POV.</div>
+          </div>
+        )}
         <div className="progress" aria-label="Criteria completion"><span style={{ width: `${Math.round(s.completion * 100)}%` }} /></div>
       </div>
 
@@ -183,7 +198,7 @@ function PovDetail({ plan, reqs, reload }: { plan: PovPlan; reqs: Requirement[];
               <tr key={`g-${g.requirement_id ?? "none"}`}><td colSpan={5}><strong>{g.requirement}</strong> {g.priority && <StatusBadge value={g.priority} />}</td></tr>,
               ...g.items.map((i) => (
                 <tr key={i.criterion_id}>
-                  <td style={{ paddingLeft: 20 }}>{i.title} {!i.ready && <StatusBadge value="draft" />}</td>
+                  <td style={{ paddingLeft: 20 }}>{i.title} {!i.ready && <StatusBadge value="tbd" />}</td>
                   <td className="small">{i.validation_method || <span className="muted">TBD</span>}</td>
                   <td className="small">{i.owner || "—"}</td>
                   <td className="small">{i.evidence.real} real{i.evidence.simulated ? ` · ${i.evidence.simulated} sim.` : ""}</td>

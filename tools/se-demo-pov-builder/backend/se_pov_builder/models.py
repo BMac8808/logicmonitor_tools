@@ -58,6 +58,7 @@ class Deal(TimestampMixin, Base):
     account: Mapped[Account] = relationship(back_populates="deals")
     stakeholders: Mapped[list[Stakeholder]] = relationship(cascade="all, delete-orphan")
     answers: Mapped[list[DiscoveryAnswer]] = relationship(cascade="all, delete-orphan")
+    custom_questions: Mapped[list[DealQuestion]] = relationship(cascade="all, delete-orphan")
     requirements: Mapped[list[Requirement]] = relationship(cascade="all, delete-orphan")
     demo_plans: Mapped[list[DemoPlan]] = relationship(cascade="all, delete-orphan")
     pov_plans: Mapped[list[PovPlan]] = relationship(cascade="all, delete-orphan")
@@ -93,6 +94,22 @@ class DiscoveryAnswer(TimestampMixin, Base):
     answer: Mapped[str] = mapped_column(Text)
     evidence_source: Mapped[str] = mapped_column(String(300), default="")
     confidence: Mapped[str] = mapped_column(String(20), default="confirmed")
+    # Exact words from a call transcript that support the answer (only accepted quotes are stored).
+    evidence_quote: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class DealQuestion(TimestampMixin, Base):
+    """A discovery question added for one deal (not part of the shared question bank).
+    Exposed to the API as question id ``custom-<id>``."""
+
+    __tablename__ = "deal_questions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    deal_id: Mapped[int] = mapped_column(ForeignKey("deals.id", ondelete="CASCADE"))
+    text: Mapped[str] = mapped_column(Text)
+    category: Mapped[str] = mapped_column(String(20), default="business")
+    purpose: Mapped[str] = mapped_column(Text, default="")
+    qualification_key: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
 
 class Requirement(TimestampMixin, Base):

@@ -3,19 +3,10 @@ import { api } from "../../api";
 import type { DealDetail } from "../../types";
 import ContextChips from "../ContextChips";
 import GapsList from "./GapsList";
-import { attempt, ErrorBanner, useAsync } from "../../ui";
+import { attempt, ErrorBanner, Tile, useAsync } from "../../ui";
 
 const STAGES = ["discovery", "technical_qualification", "demo_preparation", "pov_planning", "pov_execution",
   "success_validation", "technical_handoff", "closed_won", "closed_lost"];
-
-function Metric({ value, label }: { value: string | number; label: string }) {
-  return (
-    <div className="metric">
-      <div className="value">{value}</div>
-      <div className="label">{label}</div>
-    </div>
-  );
-}
 
 export default function OverviewTab({ deal, onChange }: { deal: DealDetail; onChange: () => void }) {
   const m = deal.metrics;
@@ -39,13 +30,16 @@ export default function OverviewTab({ deal, onChange }: { deal: DealDetail; onCh
 
   return (
     <div>
-      <div className="metrics">
-        <Metric value={m.stakeholders} label="Stakeholders" />
-        <Metric value={`${m.questions_answered}/${m.questions_total}`} label="Questions answered" />
-        <Metric value={m.requirements} label="Requirements" />
-        <Metric value={`${m.criteria_met}/${m.criteria_total}`} label="Criteria met" />
-        <Metric value={m.open_tasks} label={`Open tasks (${m.blocked_tasks} blocked, ${m.overdue_tasks} overdue)`} />
-        <Metric value={m.gaps_high} label={`High-severity gaps (of ${m.gaps_total})`} />
+      <div className="tiles" aria-label="Deal summary">
+        <Tile tone={m.stakeholders ? "info" : "neutral"} value={m.stakeholders} label="Stakeholders" />
+        <Tile tone={!m.questions_answered ? "neutral" : m.questions_answered === m.questions_total ? "good" : "info"}
+          value={`${m.questions_answered}/${m.questions_total}`} label="Questions answered" />
+        <Tile tone={m.requirements ? "info" : "neutral"} value={m.requirements} label="Requirements" />
+        <Tile tone={m.criteria_total && m.criteria_met === m.criteria_total ? "good" : m.criteria_met ? "info" : "neutral"}
+          value={`${m.criteria_met}/${m.criteria_total}`} label="Criteria met" />
+        <Tile tone={m.blocked_tasks ? "bad" : m.overdue_tasks ? "warn" : m.open_tasks ? "info" : "neutral"} value={m.open_tasks}
+          label={`Open tasks (${m.blocked_tasks} blocked, ${m.overdue_tasks} overdue)`} />
+        <Tile tone={m.gaps_high ? "warn" : "good"} value={m.gaps_high} label={`High-severity gaps (of ${m.gaps_total})`} />
       </div>
       <div className="grid grid-2">
         <form className="card" onSubmit={save} aria-label="Deal details">

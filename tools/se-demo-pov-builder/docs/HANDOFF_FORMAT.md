@@ -23,7 +23,7 @@ model. Nothing in this repository depends on, or contains code from, any interna
 | `account` | Name, industry, region, size band, `is_synthetic`. |
 | `opportunity` | Deal name, stage, summary, business drivers, target close, `technical_scope` (technology tags and labels). |
 | `contacts` | Stakeholders with title, persona, influence, stance and an optional `email` (only when the SE entered one; needed to create POV contacts in LMDA). |
-| `discovery` | Every answered question with answer, `confidence` (`confirmed`/`assumed`), who answered and the evidence source. |
+| `discovery` | Every answered question with answer, `confidence` (`confirmed`/`assumed`), who answered, the evidence source and an optional `evidence_quote` (the customer's exact words, when the answer came from a call transcript). `question_id` is a bank id, or `custom-<n>` for a question the SE added to this deal; `question` always holds the text. |
 | `qualification` | Qualification checklist status: `confirmed`, `assumed` or `missing`. |
 | `decision_criteria_notes` | The customer's answer about how options will be compared, if captured. |
 | `challenges` | Requirements with pain point, optional `business_impact` (customer's numbers), priority (`must`/`should`/`could`), mapped capabilities (each with `verified`) and source question. |

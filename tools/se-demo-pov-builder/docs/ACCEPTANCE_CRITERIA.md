@@ -31,3 +31,8 @@ Each criterion lists how it is verified. "Journey test" means
 | AC24 | Public LM tooling is catalogued with pinned commits and licences; references are validated. | `test_knowledge.py`; `make validate-content` |
 | AC25 | A system of record can link an opportunity to a deal idempotently; linked deals expose a "Send to LMDA" link built from the system's own template; URLs must be http(s). | `test_integrations.py`; `DealWorkspace.test.tsx` |
 | AC26 | The handoff carries the deal link, stakeholder emails and per-requirement business impact for importers. | `test_integrations.py` |
+| AC27 | Every deal can browse all bank questions (suggested ones flagged) and add, answer and delete its own custom questions; custom questions count towards the checklist, gaps, requirements and handoff. | `test_discovery_import.py`; `Discovery.test.tsx` |
+| AC28 | Discovery shows a compact list grouped by category, a "Start here" box with 3–5 next questions and their reasons, and a checklist item filter. | `test_discovery_import.py`; `Discovery.test.tsx` |
+| AC29 | A transcript (pasted, `.txt`, `.vtt`, `.srt`) yields proposals with the exact quote, speaker and time; nothing is stored until a proposal is accepted; accepted answers are `assumed` with the quote as evidence; confirmed answers are never replaced; AI proposals need a verbatim quote. | `test_discovery_import.py`; `Discovery.test.tsx` |
+| AC30 | Requirements show the source question text and saved answer instead of a question id. | `PlanVisuals.test.tsx` |
+| AC31 | One colour per state; generated text styled apart from user values; one unverified notice per section; demo plan and POV summary tiles with an amber callout for uncovered requirements. | `PlanVisuals.test.tsx`; light/dark screenshots |

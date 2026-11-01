@@ -38,7 +38,7 @@ function TaskRow({ task, titles, onChange, allowDelete }: {
           {task.evidence_required && <div className="small"><Badge tone={task.evidence_note ? "good" : "warn"}>evidence {task.evidence_note ? "recorded" : "required"}</Badge></div>}
         </td>
         <td className="small">{task.owner || <span className="muted">—</span>}</td>
-        <td className="small">{task.due_date ?? <span className="muted">—</span>} {overdue && <Badge tone="bad">overdue</Badge>}</td>
+        <td className="small">{task.due_date ?? <span className="muted">—</span>} {overdue && <Badge tone="warn">overdue</Badge>}</td>
         <td>
           <select aria-label={`Status for ${task.title}`} value={task.status} onChange={(e) => setStatus(e.target.value as TaskStatus)}>
             {STATUSES.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}

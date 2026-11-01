@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api, getToken, setToken } from "./api";
 import { useRoute } from "./router";
-import { buildLibrary, ErrorBanner, LibraryContext, useAsync } from "./ui";
+import { buildLibrary, ErrorBanner, LibraryContext, StateLegend, useAsync } from "./ui";
 import DealsPage from "./pages/DealsPage";
 import DealWorkspace from "./pages/DealWorkspace";
 import LibraryPage from "./pages/LibraryPage";
@@ -76,8 +76,11 @@ export default function App() {
         )}
       </main>
       <footer className="footer">
+        <StateLegend />
+        <p style={{ marginTop: 6 }}>
         Community tool — not an official LogicMonitor product. Use synthetic data only. Capability descriptions are
-        unverified community summaries.
+        unverified community summaries. <span className="gen">Italic text</span> is generated; everything else is what you entered.
+        </p>
       </footer>
     </>
   );

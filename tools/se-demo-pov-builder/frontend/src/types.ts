@@ -145,6 +145,7 @@ export interface Answer {
   answer: string;
   evidence_source: string;
   confidence: Confidence;
+  evidence_quote?: string | null;
   updated_at: string;
 }
 
@@ -158,14 +159,58 @@ export interface Question {
   qualification_key: string | null;
   priority: number;
   relevant_personas: string[];
+  /** Picked for this deal's personas and technologies. */
+  suggested: boolean;
+  /** Added to this deal only (id "custom-<n>"). */
+  custom: boolean;
   answer: Answer | null;
 }
+
+export type QuestionCategory = "business" | "technical" | "process" | "qualification" | "stakeholder";
 
 export interface DiscoveryQuestions {
   questions: Question[];
   answered: number;
   total: number;
+  bank_total: number;
+  next_up: { question_id: string; reason: string }[];
   unmatched_answers: Answer[];
+}
+
+export interface TranscriptProposal {
+  question_id: string;
+  question: string;
+  category: string;
+  quote: string;
+  speaker: string | null;
+  timestamp: string | null;
+  proposed_answer: string;
+  matched: string[];
+  method: "keyword" | "ai";
+  score: number;
+  existing_answer: Answer | null;
+}
+
+export interface TranscriptProposals {
+  format: "vtt" | "srt" | "text";
+  segments: number;
+  proposals: TranscriptProposal[];
+  ai_used: boolean;
+  notes: string[];
+}
+
+export interface QuestionListProposal {
+  text: string;
+  category: QuestionCategory;
+  duplicate_of: string | null;
+  duplicate_text: string | null;
+}
+
+export interface CustomQuestionInput {
+  text: string;
+  category: QuestionCategory;
+  purpose?: string;
+  qualification_key?: string | null;
 }
 
 export interface Gap {
@@ -178,7 +223,9 @@ export interface Gap {
 
 export interface Gaps {
   gaps: Gap[];
-  qualification: { key: string; label: string; description: string; status: "confirmed" | "assumed" | "missing" }[];
+  qualification: {
+    key: string; label: string; description: string; status: "confirmed" | "assumed" | "missing"; question_ids: string[];
+  }[];
 }
 
 export interface Requirement {

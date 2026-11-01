@@ -128,7 +128,7 @@ export default function PortalSetupCard({ plan, reload }: { plan: PovPlan; reloa
                 {t.requires.length > 0 && <div className="muted small">Also includes: {t.requires.join(", ")}</div>}
               </td>
               <td className="small">{t.milestones.map((m) => milestoneTitles[m] ?? m).join("; ")}</td>
-              <td>{t.import === "powershell" ? <Badge tone="info">script</Badge> : <Badge tone="warn" >manual</Badge>}</td>
+              <td>{t.import === "powershell" ? <Badge tone="outline">script</Badge> : <Badge tone="outline">manual</Badge>}</td>
             </tr>
           ))}
         </tbody>

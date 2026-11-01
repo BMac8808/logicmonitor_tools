@@ -75,7 +75,8 @@ tools/se-demo-pov-builder/
 | `Account` | name, industry, employee_band, region, is_synthetic | Fictional customer organisation |
 | `Deal` | account_id, name, stage, summary, business_drivers, technical_context[] | `technical_context` holds context tag ids (e.g. `network`, `cloud_aws`) that drive question selection |
 | `Stakeholder` | deal_id, name, title, persona_id, influence, stance | `persona_id` references a persona YAML file |
-| `DiscoveryAnswer` | deal_id, question_id, stakeholder_id, answer, evidence_source, confidence | One answer per question per deal; `confidence` is `confirmed` or `assumed` |
+| `DiscoveryAnswer` | deal_id, question_id, stakeholder_id, answer, evidence_source, confidence, evidence_quote | One answer per question per deal; `confidence` is `confirmed` or `assumed`; `evidence_quote` holds the accepted transcript quote |
+| `DealQuestion` | deal_id, text, category, purpose, qualification_key | A question added to one deal; exposed as question id `custom-<id>` |
 | `Requirement` | deal_id, title, category, priority, pain_point, source_question_id, capability_ids[] | `capability_ids` reference `knowledge/capabilities.yaml` |
 | `DemoPlan` | deal_id, version, title, duration_minutes, content (JSON) | Snapshot of a generated plan, including the inputs it used |
 | `PovPlan` | deal_id, title, objectives, start_date, end_date, status | Milestones are `Task` rows with `kind = milestone` |
@@ -97,9 +98,27 @@ tools/se-demo-pov-builder/
 
 ### Discovery coach (`services/discovery.py`)
 
-- **Question selection**: a question applies when its `personas` include `all` or any
-  persona assigned to a deal stakeholder, **and** its `contexts` include `any` or any of
-  the deal's `technical_context` tags. Sorted by priority, then category.
+- **Question selection**: a question is *suggested* when its `personas` include `all` or
+  any persona assigned to a deal stakeholder, **and** its `contexts` include `any` or any
+  of the deal's `technical_context` tags. Every bank question is returned with a
+  `suggested` flag, so any deal can browse and answer all of them.
+- **Custom questions** (`services/questions.py`): `question_index` merges the bank with the
+  deal's `DealQuestion` rows; the API, gap analysis, handoff and AI prompts all use it.
+- **Start here** (`next_questions`): up to five questions, in this order: one question per
+  qualification checklist item nobody has answered (pain, impact, success criteria and
+  decision process first), key questions for the deal, assumed answers to confirm, the
+  deal's custom questions, other suggested questions. Bank questions outside the deal's
+  personas fill in when few are suggested.
+- **Transcript import** (`services/transcript.py`), stateless: the transcript is parsed
+  (WebVTT, SRT, or "Speaker: text" lines with optional `[hh:mm:ss]`), consecutive cues
+  from one speaker are joined, and each question is scored per passage: +3 per "listen
+  for" phrase found, +1 per related capability keyword (max 2), +1 per question key word
+  (max 3), +1 when a "how many/how long/cost" question meets a passage with a number,
+  +3 for the reply right after the SE asks that question. The best passage per question
+  (score ≥ 3 with a real signal) becomes a proposal; at most two questions per passage.
+  Questions with a confirmed answer are skipped. With AI on, the model's items are kept
+  only if their quote is word for word in one passage. Accepting saves an `assumed`
+  answer with the quote; nothing else is stored.
 - **Gap analysis**: missing required personas (`coverage: required`), unanswered
   qualification checklist items, answers marked `assumed`, requirements without mapped
   capabilities, must-have requirements without success criteria, success criteria
@@ -173,9 +192,11 @@ only**. No code from them is copied into this public repository.
 | `ollama` | `POST {SEPB_LLM_BASE_URL}/api/chat` |
 | `openai_compatible` | `POST {SEPB_LLM_BASE_URL}/chat/completions` (Ollama, vLLM, LM Studio, llama.cpp server, ...) |
 
-Used only for an optional "draft discovery summary". Output is returned as
+Used for an optional "draft discovery summary" and, when the SE ticks "Also ask AI", for
+transcript answer suggestions. Summary output is returned as
 `{ "draft": ..., "label": "AI-generated draft — verify before use" }` and not saved
-automatically. No vendor SDKs; plain `httpx`.
+automatically. Transcript suggestions are dropped unless their quote is word for word
+in the transcript, and are reviewed like keyword matches. No vendor SDKs; plain `httpx`.
 
 ## HTTP API (summary)
 
@@ -187,7 +208,8 @@ All routes are under `/api`. Interactive docs: `http://127.0.0.1:8000/docs`.
 | Library | `GET /library/{personas,capabilities,discovery,demo-scenarios,workflows,pov-template}`, `POST /library/capabilities/match`, `POST /library/reload` |
 | Accounts / deals | `GET/POST /accounts`, `GET/PATCH/DELETE /accounts/{id}`, `GET/POST /deals`, `GET/PATCH/DELETE /deals/{id}` |
 | Stakeholders | `GET/POST /deals/{id}/stakeholders`, `PATCH/DELETE /stakeholders/{id}` |
-| Discovery | `GET /deals/{id}/discovery/questions`, `PUT/DELETE /deals/{id}/discovery/answers/{question_id}`, `GET /deals/{id}/discovery/gaps` |
+| Discovery | `GET /deals/{id}/discovery/questions`, `PUT/DELETE /deals/{id}/discovery/answers/{question_id}`, `GET /deals/{id}/discovery/gaps`, `POST /deals/{id}/discovery/custom-questions[/bulk]`, `DELETE /deals/{id}/discovery/custom-questions/{question_id}` |
+| Discovery import (stateless) | `POST /deals/{id}/discovery/transcript/proposals`, `POST /deals/{id}/discovery/transcript/accept`, `POST /deals/{id}/discovery/question-list/proposals` |
 | Requirements | `GET/POST /deals/{id}/requirements`, `PATCH/DELETE /requirements/{id}` |
 | Demo plans | `GET/POST /deals/{id}/demo-plans`, `GET/DELETE /demo-plans/{id}`, `GET /demo-plans/{id}/export` |
 | POV | `GET/POST /deals/{id}/pov-plans`, `GET/PATCH /pov-plans/{id}`, `GET /pov-plans/{id}/export`, `GET/POST /deals/{id}/success-criteria`, `PATCH/DELETE /success-criteria/{id}`, `POST /success-criteria/{id}/evidence`, `DELETE /evidence/{id}` |
