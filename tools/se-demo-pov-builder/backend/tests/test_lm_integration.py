@@ -45,6 +45,15 @@ def test_readiness_reports_missing_group(client, sample):
     assert checks["pov_group"]["status"] == "warn" and "setup script" in checks["pov_group"]["detail"]
 
 
+def test_readiness_ignores_same_named_group_below_root(client, sample):
+    _, pov_id = sample
+    # The fixture "Network" group sits under the Quillfeather POV group, not under the root.
+    client.patch(f"/api/pov-plans/{pov_id}", json={"portal_group": "Network"})
+    checks = checks_by_id(client.post(f"/api/pov-plans/{pov_id}/readiness").json())
+    assert checks["pov_group"]["status"] == "warn" and "not found" in checks["pov_group"]["detail"]
+    assert checks["pov_group"]["calls"][0]["arguments"]["filter"] == 'name:"Network",parentId:1'
+
+
 def test_readiness_live_mode_via_mcp(settings):
     server = FakeMCPServer({
         "lm_collector": lambda args: json_result([] if "isDown:true" in args.get("filter", "") else
@@ -64,7 +73,7 @@ def test_readiness_live_mode_via_mcp(settings):
     assert checks["critical_alerts"]["status"] == "ok"
     group_call = next(json.loads(r.content) for r in server.requests
                       if r.method == "POST" and b"lm_device_group" in r.content)
-    assert group_call["params"]["arguments"]["filter"] == 'name:"POV - Quillfeather Freight Co. (fictional)"'
+    assert group_call["params"]["arguments"]["filter"] == 'name:"POV - Quillfeather Freight Co. (fictional)",parentId:1'
 
 
 def test_readiness_errors_are_reported_per_check(settings):

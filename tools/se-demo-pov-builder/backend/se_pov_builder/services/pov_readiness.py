@@ -63,7 +63,8 @@ def run_readiness(adapter: Adapter, plan: PovPlan, account: Account) -> dict[str
         return "ok", f"{total} collectors, none down"
 
     def pov_group(q):
-        data = q("list_resource_groups", {"filter": f"name:{_lm_quote(group)}", "size": 5})
+        # Names are only unique per parent; the setup script creates the POV group under the root.
+        data = q("list_resource_groups", {"filter": f"name:{_lm_quote(group)},parentId:1", "size": 5})
         if not data["items"]:
             return "warn", f"Resource group '{group}' not found. Run the generated setup script to create it."
         item = data["items"][0]

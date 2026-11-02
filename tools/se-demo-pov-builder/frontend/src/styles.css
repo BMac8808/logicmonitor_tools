@@ -234,7 +234,7 @@ blockquote.quote cite { display: block; font-style: normal; font-size: 0.78rem; 
 .start-here { border: 1px solid var(--accent); border-left-width: 5px; }
 .start-here ol { margin: 0.2rem 0 0; padding-left: 1.3rem; }
 .start-here li { margin: 0.25rem 0; }
-.start-here li button.link { display: inline; text-align: left; line-height: inherit; color: var(--text); text-decoration: none; font-weight: 600; }
+.start-here li button.link { display: inline; vertical-align: top; text-align: left; line-height: inherit; color: var(--text); text-decoration: none; font-weight: 600; }
 .start-here li button.link:hover { text-decoration: underline; }
 .toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin: 0.4rem 0; }
 .toolbar input[type="search"] { flex: 1; min-width: 160px; }

@@ -36,10 +36,12 @@ The catalogue, pinned commits and licences are in `knowledge/lm_ecosystem.yaml`.
 ### Running the MCP server locally
 
 ```bash
-ENABLE_HTTP=true LM_ACCOUNT=<portal> LM_BEARER_TOKEN=<token> npx logicmonitor-api-mcp@2
+ENABLE_HTTP=true ENABLE_STDIO=false HOST=127.0.0.1 AUTH_MODE=bearer MCP_BEARER_TOKENS=<local-token> LM_ACCOUNT=<portal> LM_BEARER_TOKEN=<read-only-token> npx logicmonitor-api-mcp@2
 ```
 
-Then start this app with `SEPB_ADAPTER_MODE=mcp`. Use a least-privilege, read-only API
+Then start this app with `SEPB_ADAPTER_MODE=mcp` and `SEPB_MCP_TOKEN=<local-token>`. Keep
+`HOST=127.0.0.1` and `AUTH_MODE=bearer`: the server's defaults are all interfaces and no
+authentication. `<local-token>` is a random string you choose, not a LogicMonitor token. Use a least-privilege, read-only API
 user for the token. This app only issues list operations, but the server itself supports
 writes.
 

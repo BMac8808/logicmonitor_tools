@@ -197,15 +197,18 @@ try {
         }
     }
     foreach ($subGroup in $SubGroups) {
+        # Read-only check before Invoke-Step, so a dry run doesn't offer to create existing subgroups.
+        $child = @()
+        if ($script:PovGroupId) {
+            $child = @(Get-LMDeviceGroup -Name $subGroup | Where-Object { $_.parentId -eq $script:PovGroupId })
+        }
+        if ($child.Count -gt 0) {
+            Write-Host "Resource group '$PovGroupName/$subGroup' already exists (id $($child[0].id)); skipped"
+            continue
+        }
         Invoke-Step "Create resource group '$PovGroupName/$subGroup'" {
             if (-not $script:PovGroupId) { throw 'POV resource group id is unknown.' }
-            $child = @(Get-LMDeviceGroup -Name $subGroup | Where-Object { $_.parentId -eq $script:PovGroupId })
-            if ($child.Count -gt 0) {
-                Write-Host "  exists (id $($child[0].id)); skipped"
-            }
-            else {
-                New-LMDeviceGroup -Name $subGroup -ParentGroupId $script:PovGroupId | Out-Null
-            }
+            New-LMDeviceGroup -Name $subGroup -ParentGroupId $script:PovGroupId | Out-Null
         }
     }
 

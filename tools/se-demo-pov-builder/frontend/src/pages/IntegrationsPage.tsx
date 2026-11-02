@@ -78,7 +78,7 @@ export default function IntegrationsPage() {
               <ol className="small">
                 <li>Start the MCP server on your machine (credentials stay in its environment):
                   <pre className="output">{mcp?.install}</pre></li>
-                <li>Optionally set <code>AUTH_MODE=bearer</code> and <code>MCP_BEARER_TOKENS</code> on the server, and the same token in <code>SEPB_MCP_TOKEN</code>.</li>
+                <li>Keep <code>HOST=127.0.0.1</code> and <code>AUTH_MODE=bearer</code>: the server's defaults are all interfaces and no authentication. <code>&lt;local-token&gt;</code> is a random string you choose; set the same value in <code>SEPB_MCP_TOKEN</code>.</li>
                 <li>Restart this app with <code>SEPB_ADAPTER_MODE=mcp</code> and <code>SEPB_MCP_URL=http://127.0.0.1:3000/mcp</code>.</li>
               </ol>
             </details>
