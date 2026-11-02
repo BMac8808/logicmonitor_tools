@@ -154,6 +154,9 @@ class PovPlan(TimestampMixin, Base):
     summary_notes: Mapped[str] = mapped_column(Text, default="")
     # Resource group name the POV uses in the customer's portal (setup script + readiness check).
     portal_group: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Declared so the ORM deletes a plan's tasks before the plan; the database cascade would
+    # otherwise remove them first and the ORM's own delete of those tasks would match nothing.
+    tasks: Mapped[list[Task]] = relationship(cascade="all, delete", passive_deletes=True)
 
 
 class SuccessCriterion(TimestampMixin, Base):
@@ -203,6 +206,7 @@ class WorkflowRun(Base):
     # Snapshot of stage ids/names at creation so later YAML edits don't break old runs.
     stages: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    tasks: Mapped[list[Task]] = relationship(cascade="all, delete", passive_deletes=True)  # see PovPlan.tasks
 
 
 class Task(TimestampMixin, Base):

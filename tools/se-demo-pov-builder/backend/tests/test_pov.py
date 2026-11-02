@@ -94,3 +94,32 @@ def test_cross_deal_links_rejected(client, deal):
     req = client.post(f"/api/deals/{other['id']}/requirements", json={"title": "R", "capability_ids": []}).json()
     r = client.post(f"/api/deals/{deal['id']}/success-criteria", json={"title": "C", "requirement_id": req["id"]})
     assert r.status_code == 422
+
+
+
+def _task_links(client, deal_id):
+    """Task counts: (linked to a POV plan, linked to a workflow run, linked to neither)."""
+    from se_pov_builder.models import Task
+
+    session = client.app.state.session_factory()
+    tasks = session.query(Task).filter_by(deal_id=deal_id).all()
+    session.close()
+    return (sum(t.pov_plan_id is not None for t in tasks), sum(t.workflow_run_id is not None for t in tasks),
+            sum(t.pov_plan_id is None and t.workflow_run_id is None for t in tasks))
+
+
+def test_deleting_a_deal_deletes_each_task_once(client):
+    # Tasks also cascade from their POV plan in the database; without PovPlan.tasks the ORM deleted the
+    # plan first and then tried to delete those tasks again (SAWarnings fail the suite, see pyproject).
+    deal_id = client.post("/api/sample-data").json()["deal_id"]
+    assert all(_task_links(client, deal_id))
+    assert client.delete(f"/api/deals/{deal_id}").status_code == 204
+    assert _task_links(client, deal_id) == (0, 0, 0)
+
+
+def test_deleting_a_pov_plan_keeps_other_tasks(client):
+    deal_id = client.post("/api/sample-data").json()["deal_id"]
+    _, run, other = _task_links(client, deal_id)
+    pov_id = client.get(f"/api/deals/{deal_id}/pov-plans").json()[0]["id"]
+    assert client.delete(f"/api/pov-plans/{pov_id}").status_code == 204
+    assert _task_links(client, deal_id) == (0, run, other)

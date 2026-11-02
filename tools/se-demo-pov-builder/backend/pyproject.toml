@@ -33,6 +33,8 @@ include = ["se_pov_builder*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+# SQLAlchemy warnings point at real mapping problems (e.g. rows deleted twice), so fail on them.
+filterwarnings = ["error::sqlalchemy.exc.SAWarning"]
 
 [tool.ruff]
 line-length = 120
