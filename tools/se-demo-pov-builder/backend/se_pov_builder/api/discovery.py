@@ -269,10 +269,12 @@ def question_list_proposals(body: QuestionListIn, deal: Deal = Depends(deal_or_4
     index = deal_question_index(db, kb, deal.id)
     out = []
     for text in tx.parse_question_list(body.text):
-        similar = tx.similar_question(text, index.values())
-        out.append(QuestionListProposal(text=text, category=tx.guess_category(text),
-                                        duplicate_of=similar.id if similar else None,
-                                        duplicate_text=similar.text if similar else None))
+        similar, score = tx.closest_question(text, index.values())
+        level = ("likely" if score >= tx.LIKELY_DUPLICATE else
+                 "possible" if score >= tx.POSSIBLE_DUPLICATE else None)
+        out.append(QuestionListProposal(text=text, category=tx.guess_category(text), duplicate_level=level,
+                                        duplicate_of=similar.id if level else None,
+                                        duplicate_text=similar.text if level else None))
     return QuestionListOut(proposals=out)
 
 

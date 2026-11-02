@@ -260,6 +260,8 @@ class QuestionListProposal(BaseModel):
     category: QuestionCategory
     duplicate_of: str | None = None
     duplicate_text: str | None = None
+    # "likely" is left unselected in the UI; "possible" is a hint and stays selected.
+    duplicate_level: Literal["likely", "possible"] | None = None
 
 
 class QuestionListOut(BaseModel):

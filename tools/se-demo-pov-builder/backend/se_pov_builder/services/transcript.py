@@ -367,10 +367,17 @@ def guess_category(text: str) -> str:
     return "business"
 
 
-def similar_question(text: str, questions: Iterable[QuestionRef], threshold: float = 0.6) -> QuestionRef | None:
+LIKELY_DUPLICATE = 0.6
+# Natural rewordings of a bank question score about 0.10-0.43, and new questions on the same
+# topics up to about 0.18, so a match between these thresholds is only a hint.
+POSSIBLE_DUPLICATE = 0.25
+
+
+def closest_question(text: str, questions: Iterable[QuestionRef]) -> tuple[QuestionRef | None, float]:
+    """The most similar question by word overlap (Jaccard on stems), with its score."""
     mine = stems(text)
     if not mine:
-        return None
+        return None, 0.0
     best, best_score = None, 0.0
     for q in questions:
         theirs = stems(q.text)
@@ -379,10 +386,10 @@ def similar_question(text: str, questions: Iterable[QuestionRef], threshold: flo
         overlap = len(mine & theirs)
         score = overlap / len(mine | theirs)
         if overlap >= 3 and overlap / min(len(mine), len(theirs)) >= 0.8:
-            score = max(score, threshold)  # one question is the other plus some detail
+            score = max(score, LIKELY_DUPLICATE)  # one question is the other plus some detail
         if score > best_score:
             best, best_score = q, score
-    return best if best_score >= threshold else None
+    return best, best_score
 
 
 def parse_question_list(text: str) -> list[str]:

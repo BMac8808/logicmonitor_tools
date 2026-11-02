@@ -123,7 +123,7 @@ export default function DiscoveryImport({ dealId, llmEnabled, questions, onSaved
     setBusy(true);
     await attempt(async () => {
       const r = await api.questionListProposals(dealId, text);
-      setList(r.proposals.map((p) => ({ ...p, selected: !p.duplicate_of })));
+      setList(r.proposals.map((p) => ({ ...p, selected: p.duplicate_level !== "likely" })));
       setListResult(null);
     }, setError);
     setBusy(false);
@@ -222,8 +222,9 @@ export default function DiscoveryImport({ dealId, llmEnabled, questions, onSaved
                 <input aria-label={`Question ${i + 1}`} value={p.text} style={{ width: "100%" }}
                   onChange={(e) => setList(list.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)))} />
                 {p.duplicate_of && (
-                  <div className="small" style={{ color: "var(--warn)" }}>
-                    Similar to an existing question: “{p.duplicate_text ?? known.get(p.duplicate_of)}”
+                  <div className="small" style={{ color: p.duplicate_level === "possible" ? "var(--muted)" : "var(--warn)" }}>
+                    {p.duplicate_level === "possible" ? "Possibly similar to" : "Similar to"} an existing question:
+                    {" "}“{p.duplicate_text ?? known.get(p.duplicate_of)}”
                   </div>
                 )}
               </div>

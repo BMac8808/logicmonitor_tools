@@ -237,5 +237,16 @@ def test_question_list_proposals_flag_duplicates(client, deal):
         "text": "- How many monitoring tools do you run today, and what do they cost?\n"
                 "- Which branch sites flap most?"})
     props = r.json()["proposals"]
-    assert props[0]["duplicate_of"] == "biz_tool_cost"
+    assert props[0]["duplicate_of"] == "biz_tool_cost" and props[0]["duplicate_level"] == "likely"
     assert props[1]["duplicate_of"] is None and props[1]["category"] == "technical"
+    assert props[1]["duplicate_level"] is None
+
+
+def test_question_list_hints_at_reworded_questions(client, deal):
+    # A natural rewording shares too few words to be a likely duplicate; it is shown as a hint.
+    r = client.post(f"/api/deals/{deal['id']}/discovery/question-list/proposals", json={
+        "text": "- Roughly how many alerts do you get each week, and how many actually need action?\n"
+                "- Who receives alert notifications after hours, and is there an on-call rotation?"})
+    props = r.json()["proposals"]
+    assert props[0]["duplicate_of"] == "tech_alert_noise" and props[0]["duplicate_level"] == "possible"
+    assert props[1]["duplicate_of"] is None and props[1]["duplicate_level"] is None

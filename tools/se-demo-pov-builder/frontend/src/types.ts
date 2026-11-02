@@ -204,6 +204,7 @@ export interface QuestionListProposal {
   category: QuestionCategory;
   duplicate_of: string | null;
   duplicate_text: string | null;
+  duplicate_level: "likely" | "possible" | null;
 }
 
 export interface CustomQuestionInput {
