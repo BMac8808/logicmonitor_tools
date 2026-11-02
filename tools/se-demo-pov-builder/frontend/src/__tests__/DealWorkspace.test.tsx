@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import DealWorkspace from "../pages/DealWorkspace";
 import { mockApi, WithLibrary } from "../test/helpers";
 
@@ -39,5 +40,31 @@ describe("DealWorkspace header", () => {
     render(<WithLibrary><DealWorkspace dealId={4} tab="overview" llmEnabled={false} /></WithLibrary>);
     await screen.findByText("Linked deal");
     expect(screen.queryByRole("link", { name: "Send to LMDA" })).not.toBeInTheDocument();
+  });
+
+  it("copies the handoff JSON for pasting into LMDA", async () => {
+    const handoff = { format: "se-demo-pov-builder/handoff", version: 1 };
+    mockApi({
+      "GET /deals/4": () => deal({}), "GET /deals/4/discovery/gaps": () => ({ gaps: [], qualification: [] }),
+      "GET /deals/4/handoff": () => handoff,
+    });
+    const user = userEvent.setup(); // installs a clipboard stub
+    render(<WithLibrary><DealWorkspace dealId={4} tab="overview" llmEnabled={false} /></WithLibrary>);
+    await user.click(await screen.findByRole("button", { name: "Copy handoff JSON" }));
+    expect(await screen.findByRole("button", { name: "Copied" })).toBeInTheDocument();
+    expect(await navigator.clipboard.readText()).toBe(JSON.stringify(handoff, null, 2));
+  });
+
+  it("says so when the browser blocks the clipboard", async () => {
+    mockApi({
+      "GET /deals/4": () => deal({}), "GET /deals/4/discovery/gaps": () => ({ gaps: [], qualification: [] }),
+      "GET /deals/4/handoff": () => ({}),
+    });
+    const user = userEvent.setup();
+    vi.spyOn(navigator.clipboard, "writeText").mockRejectedValue(new DOMException("Denied", "NotAllowedError"));
+    render(<WithLibrary><DealWorkspace dealId={4} tab="overview" llmEnabled={false} /></WithLibrary>);
+    await user.click(await screen.findByRole("button", { name: "Copy handoff JSON" }));
+    expect(await screen.findByText(/blocked copying to the clipboard/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy handoff JSON" })).toBeInTheDocument();
   });
 });

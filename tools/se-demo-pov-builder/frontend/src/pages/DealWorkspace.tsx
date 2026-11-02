@@ -25,8 +25,21 @@ const TABS: { id: string; label: string; count?: (d: DealDetail) => string }[] =
 export default function DealWorkspace({ dealId, tab, llmEnabled }: { dealId: number; tab: string; llmEnabled: boolean }) {
   const deal = useAsync(() => api.deal(dealId), [dealId]);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const refresh = () => void deal.reload();
   const d = deal.data;
+  const handoffJson = async () => JSON.stringify(await api.handoff(dealId), null, 2);
+  // LMDA's import dialog takes pasted JSON, so copying saves opening the downloaded file.
+  const copyHandoff = () => attempt(async () => {
+    const text = await handoffJson();
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      throw new Error("The browser blocked copying to the clipboard. Use Export LMDA handoff (JSON) and copy from the file.");
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, setError);
 
   if (deal.error) return <ErrorBanner error={deal.error} />;
   if (!d) return <p className="muted">Loading…</p>;
@@ -52,9 +65,13 @@ export default function DealWorkspace({ dealId, tab, llmEnabled }: { dealId: num
           </a>
         )}
         <button type="button" className="secondary" title="Versioned JSON package for downstream SE platforms such as LMDA"
-          onClick={() => attempt(async () => downloadText(`handoff-${slug(d.name)}.json`,
-            JSON.stringify(await api.handoff(dealId), null, 2), "application/json"), setError)}>
+          onClick={() => attempt(async () => downloadText(`handoff-${slug(d.name)}.json`, await handoffJson(),
+            "application/json"), setError)}>
           Export LMDA handoff (JSON)
+        </button>
+        <button type="button" className="secondary" title="Copies the same JSON, ready to paste into LMDA's Paste handoff JSON tab"
+          onClick={copyHandoff}>
+          {copied ? "Copied" : "Copy handoff JSON"}
         </button>
         </div>
       </div>
