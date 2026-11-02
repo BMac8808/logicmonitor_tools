@@ -295,6 +295,7 @@ export interface DemoPlan extends DemoPlanSummary {
   deal_id: number;
   content: DemoPlanContent;
   notes: string;
+  changes_since: string[];
 }
 
 export interface Evidence {

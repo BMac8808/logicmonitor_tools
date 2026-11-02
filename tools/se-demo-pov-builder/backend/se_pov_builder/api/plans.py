@@ -88,9 +88,38 @@ def create_demo_plan(body: DemoPlanIn, deal: Deal = Depends(deal_or_404), db: Se
     return plan
 
 
+def _count(n: int, noun: str, what: str) -> str:
+    return f"{n} {noun}{'' if n == 1 else 's'} {what}"
+
+
+def demo_plan_changes(db: Session, plan: DemoPlan) -> list[str]:
+    """What changed in the plan's inputs since it was generated, from the ids the plan
+    recorded and the rows' updated_at. Any save counts as an edit."""
+    inputs = (plan.content or {}).get("inputs")
+    if not inputs:
+        return []
+    changes: list[str] = []
+    for model, key, noun in ((Requirement, "requirement_ids", "requirement"),
+                             (Stakeholder, "stakeholder_ids", "stakeholder")):
+        rows = db.query(model).filter_by(deal_id=plan.deal_id).all()
+        was, now = set(inputs.get(key, [])), {r.id for r in rows}
+        edited = sum(r.id in was and r.updated_at > plan.created_at for r in rows)
+        for n, what in ((len(now - was), "added"), (len(was - now), "removed"), (edited, "edited")):
+            if n:
+                changes.append(_count(n, noun, what))
+    answers = db.query(DiscoveryAnswer).filter_by(deal_id=plan.deal_id).all()
+    if len(answers) != inputs.get("answer_count") or any(a.updated_at > plan.created_at for a in answers):
+        changes.append("discovery answers changed")
+    deal = db.get(Deal, plan.deal_id)
+    if sorted(deal.technical_context or []) != inputs.get("technical_context", []):
+        changes.append("technical context changed")
+    return changes
+
+
 @router.get("/demo-plans/{plan_id}", response_model=DemoPlanOut)
-def get_demo_plan(plan_id: int, db: Session = Depends(get_db)) -> DemoPlan:
-    return get_or_404(db, DemoPlan, plan_id)
+def get_demo_plan(plan_id: int, db: Session = Depends(get_db)) -> DemoPlanOut:
+    plan = get_or_404(db, DemoPlan, plan_id)
+    return DemoPlanOut.model_validate(plan).model_copy(update={"changes_since": demo_plan_changes(db, plan)})
 
 
 @router.get("/demo-plans/{plan_id}/export")

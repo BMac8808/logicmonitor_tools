@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import DemoPlanTab from "../components/deal/DemoPlanTab";
 import RequirementsTab from "../components/deal/RequirementsTab";
 import { mockApi, WithLibrary } from "../test/helpers";
@@ -31,7 +32,7 @@ describe("Requirements and plan visuals", () => {
 
   it("summarises the demo plan in tiles and calls out uncovered requirements", async () => {
     const plan: DemoPlan = {
-      id: 7, deal_id: 1, version: 1, title: "Demo", duration_minutes: 45, created_at: "2026-11-01T00:00:00Z", notes: "",
+      id: 7, deal_id: 1, version: 1, title: "Demo", duration_minutes: 45, created_at: "2026-11-01T00:00:00Z", notes: "", changes_since: [],
       content: {
         generator: "x", generated_at: "x", duration_minutes: 45, generic: false,
         agenda: [{ start_minute: 0, minutes: 45, title: "All", kind: "scenario", scenario_id: "s1" }],
@@ -56,5 +57,30 @@ describe("Requirements and plan visuals", () => {
     expect(within(callout).getByText("Monitor branch WAN links")).toBeInTheDocument();
     expect(screen.getAllByText(/not yet verified/)).toHaveLength(1);
     expect(screen.queryByText(/· unverified/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("note", { name: "Plan out of date" })).not.toBeInTheDocument();
+  });
+
+  it("says when the deal changed after the plan was generated and offers a new version", async () => {
+    const stale: DemoPlan = {
+      id: 7, deal_id: 1, version: 1, title: "Demo", duration_minutes: 60, created_at: "2026-11-01T00:00:00Z", notes: "",
+      changes_since: ["1 requirement added", "1 stakeholder removed"],
+      content: {
+        generator: "x", generated_at: "x", duration_minutes: 60, generic: true, agenda: [], segments: [], pain_points: [],
+        audience_focus: [], prerequisites: [], data_requirements: [], prep_tasks: [], uncovered_requirements: [],
+        assumptions: [], missing_evidence: [],
+      },
+    };
+    const fresh = { ...stale, id: 8, version: 2, changes_since: [] };
+    const calls = mockApi({
+      "GET /deals/1/demo-plans": () => [stale], "GET /demo-plans/7": () => stale, "POST /deals/1/demo-plans": () => fresh,
+    });
+    const user = userEvent.setup();
+    render(<WithLibrary><DemoPlanTab dealId={1} onChange={() => {}} /></WithLibrary>);
+
+    const note = await screen.findByRole("note", { name: "Plan out of date" });
+    expect(within(note).getByText(/1 requirement added, 1 stakeholder removed/)).toBeInTheDocument();
+    await user.click(within(note).getByRole("button", { name: "Generate new version" }));
+    await vi.waitFor(() => expect(calls.some((c) => c.method === "POST" && c.path === "/deals/1/demo-plans")).toBe(true));
+    await vi.waitFor(() => expect(screen.queryByRole("note", { name: "Plan out of date" })).not.toBeInTheDocument());
   });
 });

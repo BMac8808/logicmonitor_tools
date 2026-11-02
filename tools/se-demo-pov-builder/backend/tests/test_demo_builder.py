@@ -81,3 +81,23 @@ def test_minimum_duration(kb):
     with pytest.raises(ValueError):
         generate_demo_plan(kb, deal=deal([]), stakeholders=[], answers=[], requirements=[],
                            duration_minutes=FIXED_MINUTES)
+
+
+def test_saved_plan_reports_changes_since_it_was_generated(client):
+    deal_id = client.post("/api/sample-data").json()["deal_id"]
+    plan = client.post(f"/api/deals/{deal_id}/demo-plans", json={}).json()
+    assert client.get(f"/api/demo-plans/{plan['id']}").json()["changes_since"] == []
+
+    reqs = client.get(f"/api/deals/{deal_id}/requirements").json()
+    client.post(f"/api/deals/{deal_id}/requirements", json={"title": "Integrate with ServiceNow", "priority": "must"})
+    client.patch(f"/api/requirements/{reqs[0]['id']}", json={"priority": "could"})
+    client.delete(f"/api/requirements/{reqs[1]['id']}")
+    client.delete(f"/api/stakeholders/{client.get(f'/api/deals/{deal_id}/stakeholders').json()[0]['id']}")
+    client.put(f"/api/deals/{deal_id}/discovery/answers/tech_logs", json={"answer": "Splunk, rarely used"})
+    client.patch(f"/api/deals/{deal_id}", json={"technical_context": ["kubernetes"]})
+
+    assert client.get(f"/api/demo-plans/{plan['id']}").json()["changes_since"] == [
+        "1 requirement added", "1 requirement removed", "1 requirement edited", "1 stakeholder removed",
+        "discovery answers changed", "technical context changed"]
+    newer = client.post(f"/api/deals/{deal_id}/demo-plans", json={}).json()
+    assert client.get(f"/api/demo-plans/{newer['id']}").json()["changes_since"] == []

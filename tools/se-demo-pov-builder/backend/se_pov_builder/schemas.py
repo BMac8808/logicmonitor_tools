@@ -350,6 +350,8 @@ class DemoPlanOut(ORM):
     content: dict[str, Any]
     notes: str
     created_at: datetime
+    # Changes to the deal's saved data since this version was generated.
+    changes_since: list[str] = []
 
 
 class DemoPlanListItem(ORM):

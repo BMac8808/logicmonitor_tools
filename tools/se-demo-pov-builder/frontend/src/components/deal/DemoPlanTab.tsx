@@ -129,8 +129,8 @@ export default function DemoPlanTab({ dealId, onChange }: { dealId: number; onCh
     if (selected !== null) void attempt(async () => setPlan(await api.demoPlan(selected)), setError);
   }, [selected]);
 
-  const generate = (e: React.FormEvent) => {
-    e.preventDefault();
+  const generate = (e?: React.FormEvent) => {
+    e?.preventDefault();
     return attempt(async () => {
       const p = await api.generateDemoPlan(dealId, { duration_minutes: duration, max_scenarios: maxScenarios });
       await plans.reload();
@@ -168,6 +168,15 @@ export default function DemoPlanTab({ dealId, onChange }: { dealId: number; onCh
         )}
       </form>
       <p className="muted small">Plans are generated from saved stakeholders, discovery answers and requirements only. Each generation is saved as a new version.</p>
+      {plan && plan.changes_since.length > 0 && (
+        <div className="callout callout-warn row spread" role="note" aria-label="Plan out of date">
+          <div>
+            <h4>The deal has changed since v{plan.version} was generated</h4>
+            <p className="small">{plan.changes_since.join(", ")}. Coverage and scenarios reflect the deal as it was then.</p>
+          </div>
+          <button type="button" onClick={() => generate()}>Generate new version</button>
+        </div>
+      )}
       {plan ? <PlanView plan={plan} /> : plans.data && !plans.data.length && <Empty>No demo plan yet. Generate one from the saved discovery.</Empty>}
     </div>
   );
