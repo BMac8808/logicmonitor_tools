@@ -32,6 +32,7 @@ from ..schemas import (
     StakeholderOut,
     StakeholderPatch,
 )
+from ..services.accounts import find_account
 from ..services.discovery import analyse_gaps, applicable_questions
 from ..services.questions import deal_question_index
 from ..services.workflow_engine import CLOSED
@@ -58,8 +59,15 @@ def list_accounts(db: Session = Depends(get_db)) -> list[Account]:
     return db.query(Account).order_by(Account.name).all()
 
 
+def _check_name_free(db: Session, name: str, exclude_id: int | None = None) -> None:
+    existing = find_account(db, name, exclude_id=exclude_id)
+    if existing:
+        raise HTTPException(409, f"An account named '{existing.name}' already exists. Choose it from the account list.")
+
+
 @router.post("/accounts", response_model=AccountOut, status_code=201)
 def create_account(body: AccountIn, db: Session = Depends(get_db)) -> Account:
+    _check_name_free(db, body.name)
     account = Account(**body.model_dump())
     db.add(account)
     db.commit()
@@ -74,6 +82,8 @@ def get_account(account_id: int, db: Session = Depends(get_db)) -> Account:
 @router.patch("/accounts/{account_id}", response_model=AccountOut)
 def update_account(account_id: int, body: AccountPatch, db: Session = Depends(get_db)) -> Account:
     account = get_or_404(db, Account, account_id)
+    if body.name is not None:
+        _check_name_free(db, body.name, exclude_id=account.id)
     for key, value in body.model_dump(exclude_unset=True).items():
         setattr(account, key, value)
     db.commit()

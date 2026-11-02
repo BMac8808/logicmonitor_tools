@@ -22,6 +22,7 @@ from .models import (
     SuccessCriterion,
     Task,
 )
+from .services.accounts import find_account
 from .services.demo_builder import generate_demo_plan
 from .services.pov_builder import create_pov_plan
 from .services.workflow_engine import start_run
@@ -34,13 +35,16 @@ SOURCE_CALL_2 = "Technical deep-dive with Priya Raman and Jo Kim (synthetic note
 
 def seed_sample_engagement(session: Session, kb: KnowledgeBase, today: date | None = None) -> int:
     today = today or date.today()
-    account = Account(
-        name=SAMPLE_ACCOUNT_NAME, industry="Logistics & warehousing", employee_band="5,000–10,000",
-        region="North America (fictional)", is_synthetic=True,
-        notes="Entirely fictional organisation used to demonstrate the tool.",
-    )
-    session.add(account)
-    session.flush()
+    # Reuse the account if it is still there (e.g. after the sample deal was deleted) or came from LMDA.
+    account = find_account(session, SAMPLE_ACCOUNT_NAME)
+    if account is None:
+        account = Account(
+            name=SAMPLE_ACCOUNT_NAME, industry="Logistics & warehousing", employee_band="5,000–10,000",
+            region="North America (fictional)", is_synthetic=True,
+            notes="Entirely fictional organisation used to demonstrate the tool.",
+        )
+        session.add(account)
+        session.flush()
     deal = Deal(
         account_id=account.id, name=SAMPLE_DEAL_NAME, stage="pov_planning",
         summary="Replace four overlapping monitoring tools with one platform covering warehouse networks, "

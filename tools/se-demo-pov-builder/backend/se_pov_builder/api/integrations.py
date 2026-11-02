@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from ..knowledge import KnowledgeBase
 from ..models import Account, Deal
+from ..services.accounts import find_account
 from ..services.handoff import deal_url
 from .deps import get_db, get_kb
 
@@ -70,7 +71,7 @@ def link_opportunity(body: OpportunityLinkIn, request: Request, db: Session = De
     deal = db.query(Deal).filter_by(external_system=body.system, external_id=body.external_id).first()
     created = deal is None
     if deal is None:
-        account = db.query(Account).filter_by(name=body.account.name).first()
+        account = find_account(db, body.account.name)
         if account is None:
             account = Account(name=body.account.name, industry=body.account.industry,
                               region=body.account.region, is_synthetic=body.account.is_synthetic)

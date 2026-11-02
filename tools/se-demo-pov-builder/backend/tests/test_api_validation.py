@@ -48,3 +48,22 @@ def test_library_endpoints(client):
     m = client.post("/api/library/capabilities/match", json={"text": "kubernetes pods crashing"}).json()
     assert m[0]["capability_id"] == "container_monitoring"
     assert client.post("/api/library/reload").json()["personas"] >= 7
+
+
+def test_account_names_are_not_duplicated(client):
+    first = client.post("/api/accounts", json={"name": "Acme Freight (fictional)"}).json()
+    r = client.post("/api/accounts", json={"name": "  acme   freight (FICTIONAL) "})
+    assert r.status_code == 409 and "Acme Freight (fictional)" in r.json()["detail"]
+    other = client.post("/api/accounts", json={"name": "Other Co (fictional)"}).json()
+    assert client.patch(f"/api/accounts/{other['id']}", json={"name": "ACME Freight (fictional)"}).status_code == 409
+    assert client.patch(f"/api/accounts/{first['id']}", json={"name": "Acme Freight (fictional)"}).status_code == 200
+
+
+def test_reloading_the_sample_reuses_its_account(client):
+    deal_id = client.post("/api/sample-data").json()["deal_id"]
+    account_id = client.get(f"/api/deals/{deal_id}").json()["account_id"]
+    client.delete(f"/api/deals/{deal_id}")
+    assert [a["id"] for a in client.get("/api/accounts").json()] == [account_id]  # accounts are never deleted silently
+    again = client.post("/api/sample-data").json()["deal_id"]
+    assert client.get(f"/api/deals/{again}").json()["account_id"] == account_id
+    assert len(client.get("/api/accounts").json()) == 1
