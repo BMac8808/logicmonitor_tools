@@ -98,6 +98,8 @@ def test_setup_script_is_safe_by_default(client, sample):
         for line in text.splitlines():
             if cmd in line and not line.strip().startswith(("#", "Write-")) and "$groupArgs" not in line:
                 assert line.startswith(" " * 12), f"{cmd} outside an Invoke-Step block: {line}"
+    # Logic.Monitor requires a parent for New-LMDeviceGroup; the POV group goes under the root.
+    assert "ParentGroupId = 1 }" in text
     # No credentials embedded; only environment variables or the cached credential.
     assert "$env:LM_ACCESS_KEY" in text and "-UseCachedCredential" in text
     assert not re.search(r"(?i)(AccessKey|BearerToken)\s+'", text)
