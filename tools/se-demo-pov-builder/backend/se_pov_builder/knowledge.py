@@ -178,7 +178,7 @@ class _EcosystemItem(_Model):
 
 
 class ToolkitItem(_EcosystemItem):
-    kind: Literal["datasource", "logsource", "propertysource", "suite"]
+    kind: Literal["datasource", "configsource", "logsource", "propertysource", "suite"]
     format: Literal["xml", "json", "md"]
     import_: Literal["powershell", "manual"] = Field(alias="import")
     module_name: str = ""  # name inside the module file; used to avoid overwriting existing modules
@@ -422,8 +422,8 @@ class KnowledgeBase:
             for r in t.requires:
                 if r not in toolkit_ids:
                     problems.append(f"toolkit item '{t.id}': requires unknown toolkit item '{r}'")
-            if t.import_ == "powershell" and (t.kind not in ("datasource", "logsource") or t.format == "md"):
-                problems.append(f"toolkit item '{t.id}': only datasources and logsources can be imported by script")
+            if t.import_ == "powershell" and (t.kind not in ("datasource", "configsource", "logsource") or t.format == "md"):
+                problems.append(f"toolkit item '{t.id}': only datasources, configsources and logsources can be imported by script")
             if t.import_ == "powershell" and not t.module_name:
                 problems.append(f"toolkit item '{t.id}': scripted imports need 'module_name'")
             if t.import_ == "manual" and not t.manual_steps:

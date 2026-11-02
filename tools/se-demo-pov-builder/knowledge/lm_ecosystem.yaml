@@ -100,10 +100,10 @@ toolkit:
     project: logicmonitor_dashboards
     path: POV/LogicMonitor_Collector_Configurations.xml
     module_name: LogicMonitor_Collector_Configurations
-    kind: datasource
+    kind: configsource  # <dataSourceType>2</dataSourceType> in the XML: imports as a ConfigSource
     format: xml
     import: powershell
-    purpose: Reports collector configuration settings for collectors in the POV.
+    purpose: ConfigSource that captures each collector's config files (agent.conf, sbproxy.conf, watchdog.conf, wrapper.conf) so changes are tracked.
     milestones: [environment_setup, coverage_validation]
   - id: collector_health
     title: Collector health (aggregate)

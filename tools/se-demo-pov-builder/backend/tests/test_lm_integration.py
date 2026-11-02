@@ -129,6 +129,16 @@ def test_setup_script_pins_sources_and_resolves_dependencies(client, sample):
     assert "stevevillardi/LogicMonitor-Dashboards @ af0b95f0e6cb (MPL-2.0)" in text
 
 
+def test_setup_script_checks_xml_modules_as_datasources_and_configsources(client, sample):
+    _, pov_id = sample
+    text = script(client, pov_id, toolkit_ids=["collector_configurations"])
+    # The XML is a ConfigSource (<dataSourceType>2</dataSourceType>), so it imports as one.
+    assert "ModuleName = 'LogicMonitor_Collector_Configurations'; Type = 'configsources'; Format = 'xml'" in text
+    # XML imports overwrite silently, and the file decides the module type: check both lists.
+    assert "$xmlExists = @('Get-LMDatasource', 'Get-LMConfigSource')" in text
+    assert "datasources = $xmlExists; configsources = $xmlExists" in text
+
+
 def test_setup_script_groups_from_context(client, sample):
     _, pov_id = sample
     text = script(client, pov_id)

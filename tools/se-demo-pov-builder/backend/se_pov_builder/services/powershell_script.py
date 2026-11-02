@@ -9,12 +9,13 @@ The app never changes a portal itself. The script is reviewed and run by a perso
 * Toolkit LogicModules are downloaded at run time from the reviewed, pinned commit of
   their public repository. A module that already exists (by name) is skipped, and JSON
   imports also use ``-HandleConflict ERROR``, so existing customer modules are never
-  overwritten.
+  overwritten. XML imports have no conflict option and the file decides whether it becomes
+  a DataSource or a ConfigSource, so XML names are checked against both.
 
 Cmdlets and parameters used (verified in the module source at the pinned commit):
 Connect-LMAccount (-AccessId/-AccessKey/-AccountName, -BearerToken/-AccountName,
 -UseCachedCredential), Disconnect-LMAccount, Get-LMCollector, Get-LMDeviceGroup -Name, Get-LMDatasource -Name,
-Get-LMLogSource -Name,
+Get-LMConfigSource -Name, Get-LMLogSource -Name,
 New-LMDeviceGroup (-Name, -Description, -Properties, -ParentGroupId),
 Import-LMLogicModuleFromFile (-FilePath, -Type, -Format, -HandleConflict).
 """
@@ -27,7 +28,7 @@ from ..knowledge import KnowledgeBase, ToolkitItem
 from ..models import Account, Deal, PovPlan, utcnow
 from .pov_readiness import group_name
 
-IMPORT_TYPE = {"datasource": "datasources", "logsource": "logsources"}
+IMPORT_TYPE = {"datasource": "datasources", "configsource": "configsources", "logsource": "logsources"}
 _CURLY_SINGLE = re.compile("[‘’‚‛]")
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 
@@ -213,10 +214,13 @@ try {
     }
 
     # --- 4. Toolkit LogicModules (pinned public sources) ----------------------------
-    $existsCmd = @{ datasources = 'Get-LMDatasource'; logsources = 'Get-LMLogSource' }
+    # XML files become a DataSource or a ConfigSource depending on their content, so check both.
+    $xmlExists = @('Get-LMDatasource', 'Get-LMConfigSource')
+    $existsCmd = @{ datasources = $xmlExists; configsources = $xmlExists; logsources = @('Get-LMLogSource') }
     foreach ($item in $Toolkit) {
         # Never overwrite a module that already exists in the customer's portal.
-        if (@(& $existsCmd[$item.Type] -Name $item.ModuleName).Count -gt 0) {
+        $existing = @($existsCmd[$item.Type] | ForEach-Object { & $_ -Name $item.ModuleName })
+        if ($existing.Count -gt 0) {
             Write-Host "$($item.Type) '$($item.ModuleName)' already exists; skipped"
             continue
         }

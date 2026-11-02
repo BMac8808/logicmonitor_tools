@@ -462,7 +462,7 @@ interface EcosystemItemBase {
 }
 
 export interface ToolkitItem extends EcosystemItemBase {
-  kind: "datasource" | "logsource" | "propertysource" | "suite";
+  kind: "datasource" | "configsource" | "logsource" | "propertysource" | "suite";
   import: "powershell" | "manual";
   purpose: string;
   milestones: string[];
