@@ -28,7 +28,7 @@ R = ActionKind.READ_ONLY
 _LIST_PARAMS = (
     ActionParam("filter", description='LogicMonitor filter expression, e.g. isDown:true or name:"POV - Example"'),
     ActionParam("size", type="integer", description="Items per page (1-1000)"),
-    ActionParam("fields", description="Comma-separated fields to return"),
+    ActionParam("fields", description="Comma-separated fields to return (only fields this app passes on are shown)"),
 )
 ACTIONS: list[tuple[ActionSpec, str]] = [
     (ActionSpec("list_collectors", R, "List collectors (lm_collector list).", _LIST_PARAMS), "lm_collector"),
@@ -39,6 +39,34 @@ ACTIONS: list[tuple[ActionSpec, str]] = [
     (ActionSpec("list_dashboards", R, "List dashboards (lm_dashboard list).", _LIST_PARAMS), "lm_dashboard"),
 ]
 TOOL_FOR_ACTION = {spec.name: tool for spec, tool in ACTIONS}
+
+# Fields passed on per tool. The server returns full LogicMonitor records, which carry secrets
+# and config (a collector has bearerToken and its agent/wrapper/sbproxy config files; resources and
+# groups carry custom, inherited and system properties). Anything not listed here is dropped.
+SAFE_FIELDS: dict[str, frozenset[str]] = {
+    "lm_collector": frozenset({
+        "id", "description", "hostname", "status", "isDown", "inSDT", "collectorGroupId", "collectorGroupName",
+        "collectorSize", "build", "platform", "arch", "upTime", "backupAgentId", "enableFailBack",
+        "numberOfHosts", "numberOfInstances", "numberOfWebsites"}),
+    "lm_device_group": frozenset({
+        "id", "name", "fullPath", "parentId", "description", "groupType", "appliesTo", "disableAlerting",
+        "numOfHosts", "numOfDirectDevices", "numOfDirectSubGroups"}),
+    "lm_device": frozenset({
+        "id", "name", "displayName", "description", "deviceType", "hostStatus", "alertStatus", "sdtStatus",
+        "disableAlerting", "hostGroupIds", "preferredCollectorId", "currentCollectorId", "collectorDescription",
+        "createdOn", "updatedOn", "lastDataTime", "upTimeInSeconds"}),
+    "lm_alert": frozenset({
+        "id", "type", "severity", "monitorObjectName", "monitorObjectType", "resourceTemplateName",
+        "resourceTemplateType", "instanceName", "dataPointName", "alertValue", "threshold", "startEpoch",
+        "endEpoch", "cleared", "acked", "sdted", "rule", "chain"}),
+    "lm_dashboard": frozenset({"id", "name", "description", "groupId", "groupName", "groupFullPath", "sharable"}),
+}
+
+
+def _safe_items(tool: str, items: list[Any]) -> list[dict[str, Any]]:
+    allowed = SAFE_FIELDS[tool]
+    return [{k: v for k, v in item.items() if k in allowed} for item in items if isinstance(item, dict)]
+
 
 _FILTER_TERM = re.compile(r'\s*([\w.]+)\s*:\s*("([^"]*)"|[^,]*)\s*(?:,|$)')
 
@@ -116,6 +144,10 @@ class LogicMonitorMCPAdapter(Adapter):
             finally:
                 client.close()
         parsed = parse_tool_result(raw)
+        parsed["items"] = _safe_items(tool, parsed["items"])
+        # An unparsed payload would otherwise be passed on whole as raw text.
+        if parsed.pop("text", None):
+            parsed["summary"] += " (Result format not recognised; raw output withheld.)"
         return AdapterResult(
             self.id, spec.name, spec.kind, simulated=self.mode == "mock",
             data={**parsed, "tool": tool, "arguments": args},

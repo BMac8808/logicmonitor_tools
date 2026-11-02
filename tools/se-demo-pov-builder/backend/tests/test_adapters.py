@@ -136,6 +136,38 @@ def test_mcp_mode_reads_through_server():
     assert sent == {"name": "lm_collector", "arguments": {"operation": "list", "size": 1}}
 
 
+def test_mcp_results_keep_only_safe_fields():
+    # Full collector records carry the collector's bearer token and its config files.
+    collector = {"id": 7, "description": "c1", "hostname": "c1.example", "isDown": True,
+                 "bearerToken": "secret", "collectorConf": "x", "wrapperConf": "y", "customProperties": []}
+    group = {"id": 9, "name": "POV", "numOfHosts": 3, "customProperties": [{"name": "snmp.community"}],
+             "extra": {}, "rolePrivileges": ["write"]}
+    server = FakeMCPServer({"lm_collector": json_result([collector]), "lm_device_group": json_result([group])})
+    adapter = LogicMonitorMCPAdapter("mcp", FIXTURES, url="http://127.0.0.1:3000/mcp",
+                                     transport=httpx.MockTransport(server))
+    items = adapter.execute("list_collectors", {}).data["items"]
+    assert items == [{"id": 7, "description": "c1", "hostname": "c1.example", "isDown": True}]
+    assert adapter.execute("list_resource_groups", {}).data["items"] == [{"id": 9, "name": "POV", "numOfHosts": 3}]
+
+
+def test_unrecognised_mcp_output_is_withheld():
+    raw = {"content": [{"type": "text", "text": "ok"}, {"type": "text", "text": '{"bearerToken": "secret"}'}]}
+    server = FakeMCPServer({"lm_collector": raw})
+    adapter = LogicMonitorMCPAdapter("mcp", FIXTURES, url="http://127.0.0.1:3000/mcp",
+                                     transport=httpx.MockTransport(server))
+    data = adapter.execute("list_collectors", {}).data
+    assert "text" not in data and "secret" not in json.dumps(data)
+    assert data["items"] == [] and "raw output withheld" in data["summary"]
+
+
+def test_mock_fixtures_only_use_safe_fields():
+    from se_pov_builder.adapters.lm_mcp import SAFE_FIELDS
+
+    fixtures = json.loads((FIXTURES / "lm_mcp.json").read_text())
+    for tool, allowed in SAFE_FIELDS.items():
+        assert {k for item in fixtures[tool] for k in item} <= allowed, tool
+
+
 # --- Base contract (kept for future adapters that declare state-changing actions) ----
 class _WriteAdapter(Adapter):
     id, name, description, mode = "demo", "Demo", "", "mock"

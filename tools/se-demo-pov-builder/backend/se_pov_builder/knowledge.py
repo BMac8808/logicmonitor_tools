@@ -422,8 +422,10 @@ class KnowledgeBase:
             for r in t.requires:
                 if r not in toolkit_ids:
                     problems.append(f"toolkit item '{t.id}': requires unknown toolkit item '{r}'")
-            if t.import_ == "powershell" and (t.kind not in ("datasource", "configsource", "logsource") or t.format == "md"):
-                problems.append(f"toolkit item '{t.id}': only datasources, configsources and logsources can be imported by script")
+            scriptable = t.kind in ("datasource", "configsource", "logsource") and t.format != "md"
+            if t.import_ == "powershell" and not scriptable:
+                problems.append(f"toolkit item '{t.id}': only datasources, configsources and logsources "
+                                "can be imported by script")
             if t.import_ == "powershell" and not t.module_name:
                 problems.append(f"toolkit item '{t.id}': scripted imports need 'module_name'")
             if t.import_ == "manual" and not t.manual_steps:

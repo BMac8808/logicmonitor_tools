@@ -192,7 +192,10 @@ try {
     # --- 3. Resource groups ---------------------------------------------------------
     if (-not $script:PovGroupId) {
         Invoke-Step "Create resource group '$PovGroupName' under the root group" {
-            $groupArgs = @{ Name = $PovGroupName; Description = $PovGroupDescription; Properties = $PovGroupProperties; ParentGroupId = 1 }
+            $groupArgs = @{
+                Name = $PovGroupName; Description = $PovGroupDescription
+                Properties = $PovGroupProperties; ParentGroupId = 1
+            }
             $created = New-LMDeviceGroup @groupArgs
             $script:PovGroupId = $created.id
         }
