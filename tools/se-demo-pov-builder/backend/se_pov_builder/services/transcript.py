@@ -14,6 +14,8 @@ Only proposals the SE accepts are saved (as assumed answers, with the accepted q
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import re
 from collections.abc import Iterable, Mapping
@@ -406,3 +408,12 @@ def parse_question_list(text: str) -> list[str]:
             seen.add(key)
             out.append(line)
     return out
+
+
+def proposal_receipt(key: bytes, deal_id: int, question_id: str, quote: str, speaker: str | None,
+                     timestamp: str | None, filename: str) -> str:
+    """HMAC over what a saved answer will claim about its source, so accept only takes quotes this
+    server found in a transcript. The answer text is not covered: the SE may edit it."""
+    message = json.dumps([deal_id, question_id, quote, speaker or "", timestamp or "", filename])
+    return hmac.new(key, message.encode(), hashlib.sha256).hexdigest()
+

@@ -108,3 +108,10 @@ the rules the app applies to every import:
 The answer and question endpoints this would reuse already exist:
 `POST /api/deals/{id}/discovery/transcript/accept` and
 `POST /api/deals/{id}/discovery/custom-questions/bulk`.
+
+`transcript/accept` takes a `receipt` from `transcript/proposals` and refuses anything
+else (403). The receipt is an HMAC over the deal, question, quote, speaker, timestamp
+and file name, signed with a key the server holds in memory, so a saved quote is always
+one this server found in a transcript; the answer text is not covered and stays editable.
+Receipts lapse when the server restarts. A tool that sends call notes must therefore go
+through `transcript/proposals` (or the import above) rather than writing answers directly.

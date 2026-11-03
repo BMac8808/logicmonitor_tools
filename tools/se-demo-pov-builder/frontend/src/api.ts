@@ -106,6 +106,7 @@ export const api = {
     post<TranscriptProposals>(`/deals/${dealId}/discovery/transcript/proposals`, body),
   acceptTranscriptAnswer: (dealId: number, body: {
     question_id: string; answer: string; quote: string; speaker: string | null; timestamp: string | null; filename: string;
+    receipt: string;
   }) => post<Answer>(`/deals/${dealId}/discovery/transcript/accept`, body),
   questionListProposals: (dealId: number, text: string) =>
     post<{ proposals: QuestionListProposal[] }>(`/deals/${dealId}/discovery/question-list/proposals`, { text }),

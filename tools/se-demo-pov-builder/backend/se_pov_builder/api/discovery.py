@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hmac
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
@@ -227,6 +229,7 @@ def transcript_proposals(body: TranscriptIn, request: Request, deal: Deal = Depe
                 notes.append(f"AI suggestions unavailable ({exc}); keyword matches are shown.")
 
     proposals.sort(key=lambda p: (p.segment_index, p.method != "ai"))
+    key = request.app.state.receipt_key
     return TranscriptProposalsOut(
         format=fmt, segments=len(segments), ai_used=ai_used, notes=notes,
         proposals=[TranscriptProposal(
@@ -234,14 +237,22 @@ def transcript_proposals(body: TranscriptIn, request: Request, deal: Deal = Depe
             quote=p.quote, speaker=p.speaker, timestamp=p.timestamp, proposed_answer=p.proposed_answer,
             matched=p.matched, method=p.method, score=p.score,
             existing_answer=AnswerOut.model_validate(answers[p.question_id]) if p.question_id in answers else None,
+            receipt=tx.proposal_receipt(key, deal.id, p.question_id, p.quote, p.speaker, p.timestamp, body.filename),
         ) for p in proposals],
     )
 
 
 @router.post("/deals/{deal_id}/discovery/transcript/accept", response_model=AnswerOut)
-def accept_transcript_answer(body: TranscriptAcceptIn, deal: Deal = Depends(deal_or_404),
+def accept_transcript_answer(body: TranscriptAcceptIn, request: Request, deal: Deal = Depends(deal_or_404),
                              db: Session = Depends(get_db), kb: KnowledgeBase = Depends(get_kb)) -> DiscoveryAnswer:
-    """Save one reviewed proposal as an *assumed* answer with its quote as evidence."""
+    """Save one reviewed proposal as an *assumed* answer with its quote as evidence. The receipt
+    must come from .../transcript/proposals on this server, so the quote, speaker, timestamp and
+    file it claims are ones this server actually found."""
+    expected = tx.proposal_receipt(request.app.state.receipt_key, deal.id, body.question_id, body.quote,
+                                   body.speaker, body.timestamp, body.filename)
+    if not hmac.compare_digest(expected, body.receipt):
+        raise HTTPException(403, "This quote has no valid receipt from Find answers on this server. Run Find answers "
+                                 "again (receipts end when SE Builder restarts).")
     if body.question_id not in deal_question_index(db, kb, deal.id):
         raise HTTPException(404, f"Unknown question '{body.question_id}'")
     existing = db.query(DiscoveryAnswer).filter_by(deal_id=deal.id, question_id=body.question_id).first()

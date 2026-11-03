@@ -189,6 +189,7 @@ export interface TranscriptProposal {
   method: "keyword" | "ai";
   score: number;
   existing_answer: Answer | null;
+  receipt: string; // from the server; sent back unchanged on accept
 }
 
 export interface TranscriptProposals {

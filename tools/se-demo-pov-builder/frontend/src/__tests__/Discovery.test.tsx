@@ -86,7 +86,7 @@ describe("DiscoveryTab", () => {
       question_id: "tech_alert_noise", question: alertNoise.text, category: "technical",
       quote: "Honestly around three thousand a week, and the NOC ignores most of them.", speaker: "Dana", timestamp: "00:00:10",
       proposed_answer: "Honestly around three thousand a week, and the NOC ignores most of them.", matched: ["alert fatigue"],
-      method: "keyword", score: 6, existing_answer: null,
+      method: "keyword", score: 6, existing_answer: null, receipt: "r-1",
     };
     const calls = mockApi({
       ...routes(),
@@ -114,7 +114,7 @@ describe("DiscoveryTab", () => {
     const accept = calls.find((c) => c.path === "/deals/1/discovery/transcript/accept");
     expect(accept?.body).toEqual({
       question_id: "tech_alert_noise", answer: "About 3,000 alerts a week, mostly ignored", quote: proposal.quote,
-      speaker: "Dana", timestamp: "00:00:10", filename: "",
+      speaker: "Dana", timestamp: "00:00:10", filename: "", receipt: "r-1",
     });
     expect(onChange).toHaveBeenCalled();
   });

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hmac
 import logging
+import secrets
 import time
 
 import httpx
@@ -44,6 +45,9 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None,
     app.state.kb = KnowledgeBase.load(settings.content_dir)
     app.state.adapters = build_registry(settings, settings.content_dir / "adapters" / "mock_responses", mcp_transport)
     app.state.llm = llm or build_provider(settings)
+    # Signs transcript proposals so accept only takes quotes this server found. Held in memory only:
+    # receipts lapse on restart, and the transcript itself is never stored.
+    app.state.receipt_key = secrets.token_bytes(32)
 
     app.add_middleware(
         CORSMiddleware,

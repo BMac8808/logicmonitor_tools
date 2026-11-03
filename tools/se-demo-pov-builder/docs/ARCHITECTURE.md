@@ -118,7 +118,9 @@ tools/se-demo-pov-builder/
   (score ≥ 3 with a real signal) becomes a proposal; at most two questions per passage.
   Questions with a confirmed answer are skipped. With AI on, the model's items are kept
   only if their quote is word for word in one passage. Accepting saves an `assumed`
-  answer with the quote; nothing else is stored.
+  answer with the quote; nothing else is stored. Each proposal carries a receipt (HMAC,
+  in-memory key) over its deal, question, quote, speaker, timestamp and file, and accept
+  refuses quotes without one, so evidence can't be written that the server never found.
 - **Gap analysis**: missing required personas (`coverage: required`), unanswered
   qualification checklist items, answers marked `assumed`, requirements without mapped
   capabilities, must-have requirements without success criteria, success criteria

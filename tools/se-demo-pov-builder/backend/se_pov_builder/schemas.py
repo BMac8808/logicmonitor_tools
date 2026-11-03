@@ -231,6 +231,8 @@ class TranscriptProposal(BaseModel):
     method: Literal["keyword", "ai"]
     score: int
     existing_answer: AnswerOut | None = None
+    # Pass back unchanged to .../transcript/accept; proves this server found the quote.
+    receipt: str
 
 
 class TranscriptProposalsOut(BaseModel):
@@ -249,6 +251,7 @@ class TranscriptAcceptIn(BaseModel):
     speaker: str | None = Field(default=None, max_length=200)
     timestamp: str | None = Field(default=None, max_length=40)
     filename: str = Field(default="", max_length=200)
+    receipt: str = Field(min_length=1, max_length=200)
 
 
 class QuestionListIn(BaseModel):

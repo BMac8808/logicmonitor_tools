@@ -179,7 +179,7 @@ def test_transcript_proposals_are_stateless_and_accept_saves_assumed(client, dea
     p = props["tech_alert_noise"]
     r = client.post(f"{base}/transcript/accept", json={
         "question_id": p["question_id"], "answer": "About 3,000 alerts a week, mostly ignored", "quote": p["quote"],
-        "speaker": p["speaker"], "timestamp": p["timestamp"], "filename": "call.vtt"})
+        "speaker": p["speaker"], "timestamp": p["timestamp"], "filename": "call.vtt", "receipt": p["receipt"]})
     assert r.status_code == 200, r.text
     saved = r.json()
     assert saved["confidence"] == "assumed"
@@ -189,12 +189,40 @@ def test_transcript_proposals_are_stateless_and_accept_saves_assumed(client, dea
 
     # A confirmed answer is never replaced, and confirmed questions are not searched.
     client.put(f"{base}/answers/tech_alert_noise", json={"answer": "Confirmed by NOC lead", "confidence": "confirmed"})
-    r = client.post(f"{base}/transcript/accept", json={"question_id": "tech_alert_noise", "answer": "x", "quote": "y"})
+    r = client.post(f"{base}/transcript/accept", json={
+        "question_id": p["question_id"], "answer": "x", "quote": p["quote"], "speaker": p["speaker"],
+        "timestamp": p["timestamp"], "filename": "call.vtt", "receipt": p["receipt"]})
     assert r.status_code == 409
     out = client.post(f"{base}/transcript/proposals", json={"text": VTT}).json()
     assert "tech_alert_noise" not in {p["question_id"] for p in out["proposals"]}
     assert any("already confirmed" in n for n in out["notes"])
 
+
+
+def test_accept_needs_a_receipt_for_what_it_claims(client, deal, settings):
+    base = f"/api/deals/{deal['id']}/discovery"
+    p = next(p for p in client.post(f"{base}/transcript/proposals", json={"text": VTT, "filename": "call.vtt"}).json()
+             ["proposals"] if p["question_id"] == "tech_alert_noise")
+    good = {"question_id": p["question_id"], "answer": "edited freely", "quote": p["quote"], "speaker": p["speaker"],
+            "timestamp": p["timestamp"], "filename": "call.vtt", "receipt": p["receipt"]}
+    # Quote, speaker, timestamp, file, question and deal are all covered; the answer text is not.
+    for change in ({"quote": "This was never said on the call."}, {"speaker": "Someone Else"},
+                   {"timestamp": "00:42:00"}, {"filename": "other.vtt"}, {"question_id": "tech_logs"},
+                   {"receipt": "0" * 64}):
+        r = client.post(f"{base}/transcript/accept", json={**good, **change})
+        assert r.status_code == 403 and "Find answers" in r.json()["detail"], change
+    no_receipt = {k: v for k, v in good.items() if k != "receipt"}
+    assert client.post(f"{base}/transcript/accept", json=no_receipt).status_code == 422
+    other = client.post("/api/deals", json={"account_id": deal["account_id"], "name": "Other deal"}).json()
+    assert client.post(f"/api/deals/{other['id']}/discovery/transcript/accept", json=good).status_code == 403
+    # Receipts are signed with a key held in memory, so they lapse when the server restarts.
+    from fastapi.testclient import TestClient
+
+    from se_pov_builder.app import create_app
+
+    with TestClient(create_app(settings)) as restarted:
+        assert restarted.post(f"{base}/transcript/accept", json=good).status_code == 403
+    assert client.post(f"{base}/transcript/accept", json=good).status_code == 200
 
 def test_transcript_ai_disabled_falls_back_to_keywords(client, deal):
     out = client.post(f"/api/deals/{deal['id']}/discovery/transcript/proposals",

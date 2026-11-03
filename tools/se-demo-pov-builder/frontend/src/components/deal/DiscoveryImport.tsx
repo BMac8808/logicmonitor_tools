@@ -110,6 +110,7 @@ export default function DiscoveryImport({ dealId, llmEnabled, questions, onSaved
     const update = (r: Partial<Review>) => setReviews((all) => ({ ...all, [key(p)]: { ...all[key(p)], ...r } }));
     const ok = await attempt(() => api.acceptTranscriptAnswer(dealId, {
       question_id: p.question_id, answer: review.answer, quote: p.quote, speaker: p.speaker, timestamp: p.timestamp, filename,
+      receipt: p.receipt,
     }), (e) => update({ error: e }));
     if (ok) {
       // Only one accepted answer per question: other proposals for it are set aside.
