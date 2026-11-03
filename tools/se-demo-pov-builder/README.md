@@ -64,6 +64,8 @@ make validate-content   # check personas/, knowledge/, workflows/ for errors
 `backend/tests/test_user_journey.py` drives the whole primary journey through the HTTP
 API with the LLM disabled. Acceptance criteria and how each is verified:
 [docs/ACCEPTANCE_CRITERIA.md](docs/ACCEPTANCE_CRITERIA.md).
+Hands-on checks for a person, including against a real portal:
+[docs/MANUAL_TEST_PLAN.md](docs/MANUAL_TEST_PLAN.md).
 
 ## Feature status
 
