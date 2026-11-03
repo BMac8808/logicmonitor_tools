@@ -256,7 +256,7 @@ export default function DiscoveryTab({ dealId, onChange, llmEnabled }: { dealId:
               <button type="button" className="link" onClick={() => setChecklistKey(null)}>Show all</button>
             </div>
           )}
-          {panel === "add" && <AddQuestion dealId={dealId} onAdded={(id) => { refresh(); setView("suggested"); setOpenId(id); }} />}
+          {panel === "add" && <AddQuestion dealId={dealId} onAdded={(id) => { refresh(); setPanel("none"); setView("suggested"); setOpenId(id); }} />}
           {panel === "import" && (
             <DiscoveryImport dealId={dealId} llmEnabled={llmEnabled} questions={all}
               onSaved={refresh} onClose={() => setPanel("none")} />

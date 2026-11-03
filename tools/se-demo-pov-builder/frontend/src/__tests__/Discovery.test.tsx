@@ -81,6 +81,18 @@ describe("DiscoveryTab", () => {
     expect(screen.getByText("not suggested")).toBeInTheDocument();
   });
 
+  it("closes the add form once a question is added", async () => {
+    const added = q({ id: "custom-2", text: "Which clinics run their own servers?", custom: true, suggested: false });
+    mockApi({ ...routes(), "POST /deals/1/discovery/custom-questions": () => added });
+    const user = userEvent.setup();
+    render(<WithLibrary><DiscoveryTab dealId={1} onChange={() => {}} llmEnabled={false} /></WithLibrary>);
+
+    await user.click(await screen.findByRole("button", { name: "+ Question" }));
+    await user.type(screen.getByLabelText("New question"), added.text);
+    await user.click(screen.getByRole("button", { name: "Add question" }));
+    await vi.waitFor(() => expect(screen.queryByLabelText("New question")).not.toBeInTheDocument());
+  });
+
   it("reviews transcript proposals and saves an accepted one as assumed", async () => {
     const proposal = {
       question_id: "tech_alert_noise", question: alertNoise.text, category: "technical",

@@ -277,4 +277,13 @@ def test_question_list_hints_at_reworded_questions(client, deal):
                 "- Who receives alert notifications after hours, and is there an on-call rotation?"})
     props = r.json()["proposals"]
     assert props[0]["duplicate_of"] == "tech_alert_noise" and props[0]["duplicate_level"] == "possible"
+    assert props[0]["category"] == "technical"  # taken from the similar question
     assert props[1]["duplicate_of"] is None and props[1]["duplicate_level"] is None
+
+
+def test_question_list_takes_the_category_of_a_similar_question(client, deal):
+    # The keyword guess says stakeholder ("who"); the bank files this question under process.
+    r = client.post(f"/api/deals/{deal['id']}/discovery/question-list/proposals", json={
+        "text": "- Who owns monitoring today, and who would administer a new platform day to day?"})
+    (prop,) = r.json()["proposals"]
+    assert prop["duplicate_of"] == "proc_ownership" and prop["category"] == "process"

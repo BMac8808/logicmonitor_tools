@@ -283,7 +283,9 @@ def question_list_proposals(body: QuestionListIn, deal: Deal = Depends(deal_or_4
         similar, score = tx.closest_question(text, index.values())
         level = ("likely" if score >= tx.LIKELY_DUPLICATE else
                  "possible" if score >= tx.POSSIBLE_DUPLICATE else None)
-        out.append(QuestionListProposal(text=text, category=tx.guess_category(text), duplicate_level=level,
+        # A similar question's own category beats the keyword guess.
+        category = similar.category if level else tx.guess_category(text)
+        out.append(QuestionListProposal(text=text, category=category, duplicate_level=level,
                                         duplicate_of=similar.id if level else None,
                                         duplicate_text=similar.text if level else None))
     return QuestionListOut(proposals=out)

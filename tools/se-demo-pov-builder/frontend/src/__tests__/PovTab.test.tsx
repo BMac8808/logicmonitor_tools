@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PovTab from "../components/deal/PovTab";
 import { jsonError, mockApi, WithLibrary } from "../test/helpers";
@@ -29,6 +29,8 @@ describe("PovTab", () => {
     render(<WithLibrary><PovTab dealId={1} onChange={() => {}} /></WithLibrary>);
 
     expect(await screen.findByText("SIMULATED — not evidence")).toBeInTheDocument();
+    const tiles = screen.getByLabelText("POV summary");
+    expect(within(tiles).getByText("0/1").closest(".tile")).toHaveClass("tile-info"); // green only when all are met
     expect(screen.getByText("Simulated (not counted)")).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText("Status for Actionable alerts"), "met");
     expect(await screen.findByRole("alert")).toHaveTextContent("real (non-simulated) evidence");

@@ -167,7 +167,8 @@ function PovDetail({ plan, reqs, reload }: { plan: PovPlan; reqs: Requirement[];
         </div>
         {plan.objectives && <p style={{ marginTop: 8 }}>{plan.objectives}</p>}
         <div className="tiles" aria-label="POV summary">
-          <Tile tone="good" value={`${s.criteria_met}/${s.criteria_total}`} label="Criteria met" />
+          <Tile tone={s.criteria_total && s.criteria_met === s.criteria_total ? "good" : "info"}
+            value={`${s.criteria_met}/${s.criteria_total}`} label="Criteria met" />
           <Tile tone={s.must_have_total && s.must_have_met === s.must_have_total ? "good" : "info"}
             value={`${s.must_have_met}/${s.must_have_total}`} label="Must-have met" />
           <Tile tone="info" value={count("in_progress")} label="In progress" />
