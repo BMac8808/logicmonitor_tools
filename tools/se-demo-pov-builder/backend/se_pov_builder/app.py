@@ -37,7 +37,7 @@ def create_app(settings: Settings | None = None, llm: LLMProvider | None = None,
         title="SE Demo & POV Builder",
         version=__version__,
         description="Community tool for planning technical sales engagements. "
-                    "Not an official LogicMonitor product. Synthetic data only.",
+                    "Not an official LogicMonitor product. Sample data is fictional.",
     )
     app.state.settings = settings
     app.state.engine = engine

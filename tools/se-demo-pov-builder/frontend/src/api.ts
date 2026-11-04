@@ -79,6 +79,7 @@ export const api = {
 
   accounts: () => get<Account[]>("/accounts"),
   createAccount: (body: Partial<Account>) => post<Account>("/accounts", body),
+  updateAccount: (id: number, body: Partial<Account>) => patch<Account>(`/accounts/${id}`, body),
   deals: () => get<DealListItem[]>("/deals"),
   deal: (id: number) => get<DealDetail>(`/deals/${id}`),
   createDeal: (body: Partial<Deal>) => post<Deal>("/deals", body),

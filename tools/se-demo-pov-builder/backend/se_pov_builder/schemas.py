@@ -33,7 +33,8 @@ class AccountIn(BaseModel):
     employee_band: str = ""
     region: str = ""
     notes: str = ""
-    is_synthetic: bool = True
+    # Default: real customer data. Set True only for fictional or sample accounts.
+    is_synthetic: bool = False
 
 
 class AccountPatch(BaseModel):
@@ -42,6 +43,7 @@ class AccountPatch(BaseModel):
     employee_band: str | None = None
     region: str | None = None
     notes: str | None = None
+    is_synthetic: bool | None = None
 
 
 class AccountOut(ORM):

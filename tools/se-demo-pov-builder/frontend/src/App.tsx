@@ -78,7 +78,7 @@ export default function App() {
       <footer className="footer">
         <StateLegend />
         <p style={{ marginTop: 6 }}>
-        Community tool — not an official LogicMonitor product. Use synthetic data only. Capability descriptions are
+        Community tool — not an official LogicMonitor product. Sample data is fictional; real customer data stays on this machine and is labelled as such. Capability descriptions are
         unverified community summaries. <span className="gen">Italic text</span> is generated; everything else is what you entered.
         </p>
       </footer>

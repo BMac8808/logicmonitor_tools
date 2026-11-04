@@ -31,7 +31,9 @@ class Account(TimestampMixin, Base):
     employee_band: Mapped[str] = mapped_column(String(60), default="")
     region: Mapped[str] = mapped_column(String(120), default="")
     notes: Mapped[str] = mapped_column(Text, default="")
-    is_synthetic: Mapped[bool] = mapped_column(Boolean, default=True)
+    # False unless someone says the account is fictional: real data must never be exported
+    # labelled "synthetic". The sample loader sets True explicitly.
+    is_synthetic: Mapped[bool] = mapped_column(Boolean, default=False)
 
     deals: Mapped[list[Deal]] = relationship(back_populates="account", cascade="all, delete-orphan")
 

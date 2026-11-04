@@ -67,3 +67,17 @@ def test_reloading_the_sample_reuses_its_account(client):
     again = client.post("/api/sample-data").json()["deal_id"]
     assert client.get(f"/api/deals/{again}").json()["account_id"] == account_id
     assert len(client.get("/api/accounts").json()) == 1
+
+
+def test_accounts_are_real_customer_data_unless_marked_fictional(client):
+    real = client.post("/api/accounts", json={"name": "Real Co"}).json()
+    assert real["is_synthetic"] is False
+    deal = client.post("/api/deals", json={"account_id": real["id"], "name": "Real deal"}).json()
+    assert client.get(f"/api/deals/{deal['id']}/handoff").json()["data_classification"] == "customer"
+
+    r = client.patch(f"/api/accounts/{real['id']}", json={"is_synthetic": True})
+    assert r.status_code == 200 and r.json()["is_synthetic"] is True
+    assert client.get(f"/api/deals/{deal['id']}/handoff").json()["data_classification"] == "synthetic"
+
+    sample = client.post("/api/sample-data").json()
+    assert client.get(f"/api/deals/{sample['deal_id']}").json()["account"]["is_synthetic"] is True

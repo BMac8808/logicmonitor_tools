@@ -10,6 +10,7 @@ function NewDealForm({ onCreated }: { onCreated: (dealId: number) => void }) {
   const [accountName, setAccountName] = useState("");
   const [industry, setIndustry] = useState("");
   const [region, setRegion] = useState("");
+  const [fictional, setFictional] = useState(false);
   const [dealName, setDealName] = useState("");
   const [summary, setSummary] = useState("");
   const [context, setContext] = useState<string[]>([]);
@@ -22,7 +23,7 @@ function NewDealForm({ onCreated }: { onCreated: (dealId: number) => void }) {
     await attempt(async () => {
       let id = Number(accountId);
       if (accountId === "new") {
-        id = (await api.createAccount({ name: accountName, industry, region, is_synthetic: true })).id;
+        id = (await api.createAccount({ name: accountName, industry, region, is_synthetic: fictional })).id;
       }
       const deal = await api.createDeal({ account_id: id, name: dealName, summary, technical_context: context });
       onCreated(deal.id);
@@ -33,13 +34,15 @@ function NewDealForm({ onCreated }: { onCreated: (dealId: number) => void }) {
   return (
     <form className="card" onSubmit={submit} aria-label="Create deal">
       <h2>New deal</h2>
-      <p className="muted small">Use fictional organisations and people only.</p>
+      <p className="muted small">
+        Real customer data stays on this machine. Mark fictional accounts as such, so exports and LMDA show which is which.
+      </p>
       <ErrorBanner error={error} onDismiss={() => setError(null)} />
       <div className="form-grid">
         <label>
           Account
           <select value={accountId} onChange={(e) => setAccountId(e.target.value)}>
-            <option value="new">+ New fictional account</option>
+            <option value="new">+ New account</option>
             {accounts.data?.map((a) => (
               <option key={a.id} value={a.id}>{a.name}</option>
             ))}
@@ -49,7 +52,7 @@ function NewDealForm({ onCreated }: { onCreated: (dealId: number) => void }) {
           <>
             <label>
               Account name
-              <input required value={accountName} onChange={(e) => setAccountName(e.target.value)} placeholder="Example Corp (fictional)" />
+              <input required value={accountName} onChange={(e) => setAccountName(e.target.value)} />
             </label>
             <label>
               Industry
@@ -58,6 +61,10 @@ function NewDealForm({ onCreated }: { onCreated: (dealId: number) => void }) {
             <label>
               Region
               <input value={region} onChange={(e) => setRegion(e.target.value)} />
+            </label>
+            <label className="inline full">
+              <input type="checkbox" checked={fictional} onChange={(e) => setFictional(e.target.checked)} />
+              Fictional or sample account (not a real customer)
             </label>
           </>
         )}

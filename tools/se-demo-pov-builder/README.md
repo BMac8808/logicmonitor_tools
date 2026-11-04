@@ -5,7 +5,8 @@ engagements: stakeholders and personas, guided discovery, requirement-to-capabil
 mapping, tailored demo plans, measurable Proof of Value (POV) plans, and next actions.
 
 > Community tool. **Not an official LogicMonitor product** and not endorsed by
-> LogicMonitor, Inc. Use **synthetic data only**. Capability descriptions are unverified
+> LogicMonitor, Inc. The bundled sample data is fictional. If you use real customer data,
+> keep it on your own machine and follow your company's data policy. Capability descriptions are unverified
 > community summaries; check them against current official documentation before you
 > present anything to a customer.
 
@@ -214,7 +215,10 @@ Run `make validate-content` after editing, then **Library → Reload content fro
   PowerShell session hold them.
 - Request bodies are never logged; logs contain method, path, status and timing.
 - Data lives in `data/` (git-ignored). Delete `data/sepb.db` to reset.
-- Synthetic data only. The sample company and people are invented.
+- The sample company and people are invented. New accounts count as **real customer
+  data** unless you tick "Fictional or sample account"; the deal header shows which, and
+  the handoff's `data_classification` follows it (`customer` or `synthetic`). Accepted
+  transcript quotes are customer data too.
 
 ## Known limitations
 

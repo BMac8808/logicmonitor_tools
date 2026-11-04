@@ -31,7 +31,7 @@ def meta(request: Request) -> dict:
     return {
         "name": "SE Demo & POV Builder",
         "version": __version__,
-        "disclaimer": "Community tool. Not an official LogicMonitor product. Synthetic data only.",
+        "disclaimer": "Community tool. Not an official LogicMonitor product. Sample data is fictional.",
         "adapter_mode": s.adapter_mode,
         "mcp_url": s.mcp_url if s.adapter_mode == "mcp" else "",
         "llm_provider": s.llm_provider,

@@ -29,6 +29,13 @@ export default function DealWorkspace({ dealId, tab, llmEnabled }: { dealId: num
   const refresh = () => void deal.reload();
   const d = deal.data;
   const handoffJson = async () => JSON.stringify(await api.handoff(dealId), null, 2);
+  const toggleFictional = (fictional: boolean) => {
+    const msg = fictional
+      ? "Mark this account as fictional? Exports and LMDA will label its data as synthetic."
+      : "Mark this account as real customer data? Exports and LMDA will label it as customer data.";
+    if (!window.confirm(msg) || !d) return;
+    void attempt(async () => { await api.updateAccount(d.account.id, { is_synthetic: fictional }); refresh(); }, setError);
+  };
   // LMDA's import dialog takes pasted JSON, so copying saves opening the downloaded file.
   const copyHandoff = () => attempt(async () => {
     const text = await handoffJson();
@@ -50,6 +57,14 @@ export default function DealWorkspace({ dealId, tab, llmEnabled }: { dealId: num
         <div>
           <div className="muted small"><a href="#/">Deals</a> / {d.account.name}</div>
           <h1>{d.name}</h1>
+          <div className="row small" aria-label="Data classification">
+            {d.account.is_synthetic
+              ? <span className="badge badge-outline">Fictional data</span>
+              : <span className="badge badge-outline-strong">Customer data</span>}
+            <button type="button" className="link small" onClick={() => toggleFictional(!d.account.is_synthetic)}>
+              {d.account.is_synthetic ? "Mark as real customer" : "Mark as fictional"}
+            </button>
+          </div>
         </div>
         <div className="row">
         {d.external_system && (
