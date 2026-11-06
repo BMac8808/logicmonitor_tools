@@ -10,6 +10,12 @@ mapping, tailored demo plans, measurable Proof of Value (POV) plans, and next ac
 > community summaries; check them against current official documentation before you
 > present anything to a customer.
 
+**Role.** This is a prototyping environment for SE workflow capabilities, not a long-term
+second system. Capabilities are built and tested here first; the intended home for
+engagement data is the SE platform the deal already lives in (at LogicMonitor, the internal
+LMDA). **Send to LMDA** and the handoff export are a temporary, one-way bridge for testing
+against that platform; they get fixes but are not being extended.
+
 **Status: MVP.** The full journey works end to end without any AI service:
 
 ```
@@ -95,8 +101,8 @@ Hands-on checks for a person, including against a real portal:
 | POV toolkit catalogue and links to public tooling | **Implemented** | `knowledge/lm_ecosystem.yaml`: community dashboards/LogicModules, monitoring recipes, LMDA Composer docs |
 | Handoff export to downstream SE platforms (e.g. LMDA) | **Implemented** | Versioned JSON plus JSON Schema; see [docs/HANDOFF_FORMAT.md](docs/HANDOFF_FORMAT.md) |
 | Direct LogicMonitor REST client in this app | **Not planned** | Portal access goes through the public MCP server and PowerShell module instead |
-| LMDA round trip (opportunity → deal → POV import) | **Implemented (POC)** | This repo: integration endpoint, deal links, handoff fields. LMDA side (workspace tool card, preview/import into POV challenges, decision/success criteria with activities, contacts) is delivered to the LMDA team separately; tested end to end against a local LMDA instance with fictional data |
-| Multi-user, authentication, audit log | **Proposed** | |
+| LMDA round trip (opportunity → deal → POV import) | **Implemented (POC)** | This repo: integration endpoint, deal links, handoff fields. LMDA side (workspace tool card, preview/import into POV challenges, decision/success criteria with activities, contacts) is delivered to the LMDA team separately; tested end to end against a local LMDA instance with fictional data. Temporary bridge: one-way, adds only, not being extended |
+| Multi-user, authentication, audit log | **Not planned** | The SE platform these capabilities move into already provides sign-in, roles and audit |
 | Database migrations (Alembic) | **Proposed** | Currently `create_all` |
 | DOCX/PDF export | **Proposed** | Markdown today |
 
@@ -139,8 +145,7 @@ entered. The legend is in the page footer.
 
 ## Working with LogicMonitor (reuse, not reinvention)
 
-This app is the **planning front end**: deals, discovery, demo and POV planning happen
-here, before anything reaches a portal. Work that touches LogicMonitor reuses public
+Deals, discovery, demo and POV planning happen here, before anything reaches a portal. Work that touches LogicMonitor reuses public
 community tooling (pinned in `knowledge/lm_ecosystem.yaml`, details in
 [adapters/README.md](adapters/README.md)):
 

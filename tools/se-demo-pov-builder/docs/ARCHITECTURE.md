@@ -160,7 +160,8 @@ deal data.
 
 ## LogicMonitor integration: reuse public tooling
 
-The app is the **planning front end**. It never calls the LogicMonitor REST API directly.
+The app never calls the LogicMonitor REST API directly. The handoff to a POV tracker is a
+temporary, one-way bridge (see `HANDOFF_FORMAT.md`).
 Portal work reuses public community projects, pinned in `knowledge/lm_ecosystem.yaml`:
 
 ```

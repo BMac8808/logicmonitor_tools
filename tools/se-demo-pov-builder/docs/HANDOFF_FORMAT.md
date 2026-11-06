@@ -1,8 +1,9 @@
 # Handoff format (`se-demo-pov-builder/handoff`, version 1)
 
-This app is the **planning front end**. When an engagement moves into a POV tracker or SE
-platform (for example LogicMonitor's internal LMDA), export a handoff package instead of
-re-typing discovery:
+When an engagement moves into a POV tracker or SE platform (for example LogicMonitor's
+internal LMDA), export a handoff package instead of re-typing discovery. The handoff is a
+temporary, one-way bridge while capabilities are prototyped in this app: version 1 gets
+fixes but no new fields, and nothing syncs back.
 
 - UI: **Export LMDA handoff (JSON)** in the deal header.
 - API: `GET /api/deals/{deal_id}/handoff[?pov_plan_id=N]` (latest POV plan by default).
